@@ -24,7 +24,9 @@ def translate_text(
     )
     
     user_prompt = (
-        f"Translate the following text from {source_lang} to {target_lang}:\n\n"
+        f"The following term is written in {source_lang or 'an unknown language'}.\n"
+        f"First, translate it into {target_lang}. "
+        f"Then explain what it means in a short paragraph into {target_lang}.\n\n"
         f"{text}"
     )
     

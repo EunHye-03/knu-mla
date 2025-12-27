@@ -4,7 +4,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import health_router
+from app.routes import router as api_router
 
 def create_app() -> FastAPI:
     app = FastAPI(title="KNU MLA API", version="0.1.0")
@@ -20,7 +20,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(health_router,tags=["Health"])
+    app.include_router(api_router)
 
     return app
 

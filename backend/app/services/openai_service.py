@@ -2,12 +2,23 @@ import os
 from openai import OpenAI
 from typing import Optional
 
-client = OpenAI(
-  api_key=os.getenv("OPENAI_API_KEY")
-)
-
 class OpenAIServiceError(Exception):
     pass
+  
+  
+def get_openai_client() -> OpenAI:
+    """
+    OpenAI 클라이언트 인스턴스를 반환하는 함수
+
+    Returns:
+        OpenAI: OpenAI 클라이언트 인스턴스
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise OpenAIServiceError("OPENAI_API_KEY is not set.")
+    
+    return OpenAI(api_key=api_key)
+  
   
 def call_llm(
   *,
@@ -32,6 +43,8 @@ def call_llm(
   """
   
   try:
+    client = get_openai_client()
+    
     response = client.chat.completions.create(
       model=model,
       messages=[
