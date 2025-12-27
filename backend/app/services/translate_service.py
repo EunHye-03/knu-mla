@@ -19,16 +19,23 @@ def translate_text(
     """
     
     system_prompt = (
-        "You are a professional translator for university students."
-        "Translate the given text accurately and naturally."
+        "You are a friendly assistant for university students."
     )
     
     user_prompt = (
-        f"The following term is written in {source_lang or 'an unknown language'}.\n"
-        f"First, translate it into {target_lang}. "
-        f"Then explain what it means in a short paragraph into {target_lang}.\n\n"
+        f"The following term is written in {source_lang or 'an unknown language'}.\n\n"
+        f"Please do the following:\n"
+        f"1. Translate the term into {target_lang}.\n"
+        f"2. Explain its meaning clearly and kindly for a university student.\n\n"
+        f"Rules:\n"
+        f"- First line: ONLY the translated term.\n"
+        f"- Leave one blank line.\n"
+        f"- Below that, keep the explanation concise (2–3 sentences).\n"
+        f"- Do NOT add labels like 'Term', 'Translation', or 'Explanation'.\n"
+        f"- Do NOT include pronunciation or romanization.\n"
+        f"- Use clear and natural language, but avoid overly casual expressions.\n"
         f"{text}"
-    )
+        )
     
     translated_text = call_llm(
         system_prompt=system_prompt,
