@@ -42,11 +42,13 @@ export function Sidebar() {
                 <nav className="space-y-6">
                     {/* Main Actions */}
                     <div className="space-y-1">
-                        <Link href="/" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors font-medium
-                            text-zinc-700 hover:bg-zinc-100 hover:text-red-600
-                            dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white">
-                            <SquarePen className="h-4 w-4" />
-                            <span>New chat</span>
+                        <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all font-medium border border-transparent shadow-sm hover:shadow-md
+                            bg-white text-zinc-900 ring-1 ring-zinc-200 hover:ring-red-200
+                            dark:bg-zinc-900 dark:text-white dark:ring-zinc-800 dark:hover:ring-red-900/50 group">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors dark:bg-red-900/30 dark:text-red-400">
+                                <SquarePen className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">New chat</span>
                         </Link>
 
                         <div className="flex items-center justify-between px-3 pt-4 pb-2">
@@ -81,9 +83,9 @@ export function Sidebar() {
                     </div>
                     <div className="flex-1 overflow-hidden">
                         <div className="truncate font-bold text-zinc-900 dark:text-zinc-100">Student User</div>
-                        <div className="truncate text-xs text-zinc-500 font-medium">Free Plan</div>
+                        <div className="truncate text-xs text-zinc-500 font-medium group-hover:text-red-600 transition-colors">Free Plan</div>
                     </div>
-                    <MoreHorizontal className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                    <MoreHorizontal className="h-4 w-4 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" />
                 </button>
             </div>
         </div>

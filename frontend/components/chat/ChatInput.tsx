@@ -33,7 +33,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
     }
 
     return (
-        <div className="relative flex flex-col gap-2 rounded-xl border bg-background p-4 shadow-sm ring-1 ring-inset ring-zinc-200/50 focus-within:ring-2 focus-within:ring-red-600 dark:ring-zinc-800">
+        <div className="relative flex flex-col gap-2 rounded-2xl border bg-white/50 backdrop-blur-sm p-4 shadow-sm ring-1 ring-inset ring-zinc-200/50 transition-all duration-300 focus-within:ring-2 focus-within:ring-red-500/50 focus-within:shadow-lg focus-within:shadow-red-500/5 dark:bg-zinc-900/50 dark:ring-zinc-800">
             <textarea
                 className="min-h-[60px] w-full resize-none border-0 bg-transparent p-0 text-sm focus:ring-0 placeholder:text-muted-foreground focus-visible:outline-none text-foreground"
                 placeholder={t.placeholder}

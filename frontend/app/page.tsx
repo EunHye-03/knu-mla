@@ -56,16 +56,23 @@ export default function Home() {
         <main className="flex flex-1 flex-col items-center p-4 md:p-6 overflow-y-auto">
           <div className="flex w-full max-w-3xl flex-1 flex-col">
             {messages.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center text-center space-y-4 py-20">
-                <div className="rounded-full bg-red-100 p-4 dark:bg-red-900/20">
-                  <div className="text-4xl">👋</div>
+              <div className="flex flex-1 flex-col items-center justify-center text-center space-y-8 py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-red-100 blur-2xl dark:bg-red-900/20 animate-pulse" />
+                  <div className="relative rounded-2xl bg-gradient-to-tr from-red-50 to-white p-6 shadow-xl ring-1 ring-black/5 dark:from-zinc-900 dark:to-zinc-800 dark:ring-white/10">
+                    <div className="text-5xl">👋</div>
+                  </div>
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  {t.welcome}
-                </h1>
-                <p className="max-w-[500px] text-muted-foreground">
-                  {t.sub_welcome}
-                </p>
+                <div className="space-y-2 max-w-md">
+                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-600 bg-clip-text text-transparent dark:from-white dark:to-zinc-400">
+                    {t.welcome}
+                  </h1>
+                  <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                    {t.sub_welcome}
+                  </p>
+                </div>
+
+                {/* Feature Cards/Suggestions could go here if text allows, keeping it clean for now */}
               </div>
             ) : (
               <div className="flex-1 pb-4">

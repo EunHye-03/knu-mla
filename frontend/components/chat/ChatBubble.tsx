@@ -28,7 +28,7 @@ export function ChatBubble({
                     <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full bg-zinc-200 text-zinc-500">
                         <User className="h-5 w-5" />
                     </div>
-                    <div className="relative rounded-2xl bg-zinc-100 px-4 py-3 text-sm dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
+                    <div className="relative rounded-2xl bg-gradient-to-br from-red-600 to-red-700 px-5 py-3.5 text-sm text-white shadow-md shadow-red-500/10">
                         {content}
                     </div>
                 </div>
@@ -46,7 +46,7 @@ export function ChatBubble({
                         className="h-full w-full object-cover"
                     />
                 </div>
-                <Card className="w-full border-zinc-200 shadow-sm dark:border-zinc-800 mt-1 bg-white dark:bg-zinc-900/50">
+                <Card className="w-full border-zinc-100 shadow-sm dark:border-zinc-800 mt-1 bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80 ring-1 ring-zinc-200/50 dark:ring-zinc-800/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-bold text-zinc-900 dark:text-white">
                             KNU Assistant
