@@ -8,9 +8,9 @@ class Term(Base):
     term_id = Column(Integer, primary_key=True, index=True)
     term_name = Column(String, unique=True, index=True, nullable=False)
 
-    # 관계: term (1) -> term_translation (N)
-    translations = relationship(
-      "TermTranslation", 
+    # 관계: term (1) -> term_explanation (N)
+    explanations = relationship(
+      "TermExplanation", 
       back_populates="term",
-      cascade="all, delete-orphan" # 연관된 번역도 함께 삭제
+      cascade="all, delete-orphan" # 연관된 설명도 함께 삭제
     )

@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 
-class TermTranslation(Base):
-    __tablename__ = "term_translation"
+class TermExplanation(Base):
+    __tablename__ = "term_explanation"
 
     term_id = Column(
         Integer, 
@@ -11,11 +11,12 @@ class TermTranslation(Base):
         primary_key=True, 
         nullable=False
     )
+    term_name = Column(String(255), primary_key=True, nullable=False)
     term_lang = Column(String(2), primary_key=True, nullable=False)
     explanation = Column(Text, nullable=False)
-    
-    # 관계: term_translation (N) -> term (1)
+
+    # 관계: term_explanation (N) -> term (1)
     term = relationship(
         "Term", 
-        back_populates="translations",
+        back_populates="explanations",
     )
