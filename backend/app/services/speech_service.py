@@ -19,7 +19,7 @@ def _validate_audio_file(file: UploadFile):
 
 def transcribe(
     file: UploadFile,
-    auto_detect: bool = True,
+    auto_detect: bool = False,
     lang: Optional[str] = None
   ) -> str:
     """
