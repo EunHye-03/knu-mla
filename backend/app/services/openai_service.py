@@ -1,9 +1,22 @@
-import os
+import os, openai
 from openai import OpenAI
 from typing import Optional
 
+
 class OpenAIServiceError(Exception):
-    pass
+    """Base OpenAI service error"""
+
+
+class OpenAIRateLimitError(OpenAIServiceError):
+    """OpenAI rate limit exceeded"""
+
+
+class OpenAIUpstreamError(OpenAIServiceError):
+    """OpenAI API / network / response error"""
+
+
+class OpenAIConfigError(OpenAIServiceError):
+    """Missing or invalid OpenAI configuration"""
   
   
 def get_openai_client() -> OpenAI:
@@ -56,11 +69,21 @@ def call_llm(
     )
 
     content = response.choices[0].message.content
-
-    if not content:
-        raise OpenAIServiceError("No content generated from OpenAI.")
+    if not content or not content.strip():
+        raise OpenAIUpstreamError("Empty content returned from OpenAI.")
 
     return content.strip()
   
+  # ----------------- OpenAI 에러 -----------------
+  except openai.RateLimitError as e:
+    raise OpenAIRateLimitError(f"Rate limit exceeded: {str(e)}")
+  
+  except openai.OpenAIError as e:
+    raise OpenAIUpstreamError(f"OpenAI API error: {str(e)}")
+  
+  # ----------------- 설정 오류 -----------------
+  except OpenAIConfigError as e:
+    raise e
+
   except Exception as e:
-    raise OpenAIServiceError(f"{str(e)}")
+    raise OpenAIUpstreamError(f"{str(e)}")

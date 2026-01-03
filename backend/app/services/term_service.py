@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
 
+import openai
 from sqlalchemy.orm import Session
 
 from app.models.term import Term
@@ -9,17 +10,12 @@ from app.schemas.term import TermExplainData, TermExplainRequest, TermExplainRes
 
 from app.services.openai_service import call_llm
 from app.services.translate_service import translate_text
+from app.exceptions.error import AppError, ErrorCode
 
 
 class TermService:
 
     # ---------- DB 조회 ----------
-
-    def get_term_by_id(self, db: Session, term_id: int) -> Term:
-        term_row = db.query(Term).filter(Term.term_id == term_id).first()
-        if not term_row:
-            raise NotFoundException(f"Term with id {term_id} not found")
-        return term_row
 
     def find_explanation(
         self, db: Session, term_id: int, target_lang: str
@@ -72,13 +68,38 @@ class TermService:
             "- Keep it helpful for a university student.\n"
         )
 
-        return call_llm(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            model="gpt-4o-mini",
-            temperature=0.3,
-            max_tokens=512,
-        )
+        try:
+            return call_llm(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                model="gpt-4o-mini",
+                temperature=0.3,
+                max_tokens=512,
+            )
+
+        except openai.RateLimitError as e:
+            raise AppError(
+                message="Rate limit exceeded when calling OpenAI API.",
+                error_code=ErrorCode.RATE_LIMITED,
+                status_code=429,
+                detail=str(e),
+            )
+        
+        except (openai.APIConnectionError, openai.APIStatusError) as e:
+            raise AppError(
+                message="Upstream error occurred when calling OpenAI API.",
+                error_code=ErrorCode.UPSTREAM_ERROR,
+                status_code=502,
+                detail=str(e),
+            )
+            
+        except Exception as e:
+            raise AppError(
+                message="Internal server error.",
+                error_code=ErrorCode.INTERNAL_ERROR,
+                status_code=500,
+                detail=str(e),
+            )
 
     # ---------- Main Service ----------
 
@@ -87,8 +108,17 @@ class TermService:
         db: Session,
         request: TermExplainRequest,
     ) -> TermExplainResponse:
+        
         request_id = str(uuid.uuid4())
 
+        # --------------- 입력 검증 ---------------
+        if not request.term or request.term.strip() == "":
+            raise AppError(
+                message="The 'term' field must not be empty.",
+                error_code=ErrorCode.INVALID_INPUT,
+                status_code=400,
+            )
+        
         # DB에서 term 조회 (이름 기준)
         term_row = (
             db.query(Term)
@@ -101,17 +131,21 @@ class TermService:
             explanation_row = self.find_explanation(
                 db, term_row.term_id, request.target_lang
             )
-
-            return TermExplainResponse(
-                request_id=request_id,
-                success=True,
-                data=TermExplainData(
-                    term=request.term,
-                    source="db",
-                    explanation=explanation_row.explanation,
-                    translated_explanation=translate_text(explanation_row.explanation),
-                ),
-            )
+            # DB에 term 설명 존재
+            if explanation_row:
+                return TermExplainResponse(
+                    request_id=request_id,
+                    success=True,
+                    data=TermExplainData(
+                        term=request.term,
+                        source="db",
+                        explanation=explanation_row.explanation,
+                        translated_explanation=translate_text(
+                            explanation_row.explanation,
+                            source_lang=None,
+                            target_lang=request.target_lang),
+                    ),
+                )
 
         # DB에 term 자체가 없음 → AI 추정
         explanation_text = self.explain_by_llm(
@@ -127,13 +161,12 @@ class TermService:
                 term=request.term,
                 source="ai_guess",
                 explanation=explanation_text,
-                translated_explanation=translate_text(explanation_text),
+                translated_explanation=translate_text(
+                    text=explanation_text,
+                    source_lang=None,
+                    target_lang=request.target_lang,
+                ),
             ),
         )
-
-
-class NotFoundException(Exception):
-    pass
-
 
 term_service = TermService()
