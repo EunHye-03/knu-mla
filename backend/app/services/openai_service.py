@@ -1,6 +1,5 @@
 import os, openai
 from openai import OpenAI
-from typing import Optional
 
 
 class OpenAIServiceError(Exception):
