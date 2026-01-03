@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Copy, RefreshCw, Bot, User, ThumbsUp, ThumbsDown, Share, MoreHorizontal } from "lucide-react"
+import { Copy, RefreshCw, Bot, User, ThumbsUp, ThumbsDown, Share, FileText, Globe } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ interface ChatBubbleProps {
     content: string
     onCopy?: () => void
     onRegenerate?: () => void
+    onAction?: (action: 'translate' | 'summarize' | 'feedback_positive' | 'feedback_negative' | 'share', text: string) => void
 }
 
 export function ChatBubble({
@@ -18,8 +19,21 @@ export function ChatBubble({
     content,
     onCopy,
     onRegenerate,
+    onAction
 }: ChatBubbleProps) {
     const isUser = role === "user"
+
+    // Helper to parse content if it's JSON
+    const parsedContent = React.useMemo(() => {
+        if (isUser) return null;
+        try {
+            return JSON.parse(content);
+        } catch (e) {
+            return null;
+        }
+    }, [content, isUser]);
+
+    const isStructured = parsedContent && parsedContent.summary && Array.isArray(parsedContent.key_points);
 
     if (isUser) {
         return (
@@ -52,63 +66,122 @@ export function ChatBubble({
                             KNU Assistant
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
-                        {content}
+                    <CardContent className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 space-y-3">
+                        {isStructured ? (
+                            <div className="space-y-4">
+                                <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                    <h4 className="font-semibold text-red-600 mb-2 flex items-center gap-2">
+                                        <FileText className="h-4 w-4" /> Summary
+                                    </h4>
+                                    <p>{parsedContent.summary}</p>
+                                </div>
+
+                                {parsedContent.key_points && parsedContent.key_points.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold mb-2 text-zinc-700 dark:text-zinc-300">Key Points</h4>
+                                        <ul className="list-disc pl-5 space-y-1 text-zinc-600 dark:text-zinc-400">
+                                            {parsedContent.key_points.map((point: string, i: number) => (
+                                                <li key={i}>{point}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {parsedContent.keywords && parsedContent.keywords.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 pt-2">
+                                        {parsedContent.keywords.map((keyword: string, i: number) => (
+                                            <span key={i} className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-md text-xs font-medium text-zinc-500">
+                                                #{keyword}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="whitespace-pre-wrap">{content}</div>
+                        )}
                     </CardContent>
-                    <CardFooter className="flex items-center gap-1 pt-2 pb-3 pl-6">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                            onClick={onCopy}
-                        >
-                            <Copy className="h-4 w-4" />
-                            <span className="sr-only">Copy</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                        >
-                            <ThumbsUp className="h-4 w-4" />
-                            <span className="sr-only">Good response</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                        >
-                            <ThumbsDown className="h-4 w-4" />
-                            <span className="sr-only">Bad response</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                        >
-                            <Share className="h-4 w-4" />
-                            <span className="sr-only">Share</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                            onClick={onRegenerate}
-                        >
-                            <RefreshCw className="h-4 w-4" />
-                            <span className="sr-only">Regenerate</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                        >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">More</span>
-                        </Button>
+
+                    <CardFooter className="flex flex-col gap-2 pt-2 pb-3 px-4">
+                        {/* Action Buttons Row */}
+                        <div className="flex w-full items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-1">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1.5 rounded-full"
+                                onClick={() => onAction?.('summarize', isStructured ? parsedContent.summary : content)}
+                            >
+                                <FileText className="h-3 w-3" /> Summarize this
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1.5 rounded-full"
+                                onClick={() => onAction?.('translate', isStructured ? parsedContent.summary : content)}
+                            >
+                                <Globe className="h-3 w-3" /> Translate this
+                            </Button>
+                        </div>
+
+                        {/* Feedback Actions */}
+                        <div className="flex w-full items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                                onClick={onCopy}
+                                title="Copy"
+                            >
+                                <Copy className="h-4 w-4" />
+                                <span className="sr-only">Copy</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                                onClick={() => onAction?.('feedback_positive', content)}
+                                title="Good response"
+                            >
+                                <ThumbsUp className="h-4 w-4" />
+                                <span className="sr-only">Good response</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                                onClick={() => onAction?.('feedback_negative', content)}
+                                title="Bad response"
+                            >
+                                <ThumbsDown className="h-4 w-4" />
+                                <span className="sr-only">Bad response</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                                onClick={() => onAction?.('share', content)}
+                                title="Share"
+                            >
+                                <Share className="h-4 w-4" />
+                                <span className="sr-only">Share</span>
+                            </Button>
+                            <div className="ml-auto">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                                    onClick={onRegenerate}
+                                    title="Regenerate"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    <span className="sr-only">Regenerate</span>
+                                </Button>
+                            </div>
+                        </div>
                     </CardFooter>
                 </Card>
             </div>
         </div>
     )
 }
+

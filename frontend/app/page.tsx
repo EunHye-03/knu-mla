@@ -16,11 +16,32 @@ type Message = {
 }
 
 export default function Home() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [messages, setMessages] = React.useState<Message[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
+  const [chatHistory, setChatHistory] = React.useState<{ id: number, title: string }[]>([])
 
-  const handleSend = async (text: string, mode: string) => {
+  const handleSend = async (text: string, mode: string, options?: { targetLang?: string }) => {
+    // Determine if it's a feedback action or a real message
+    if (mode === 'feedback_positive') {
+      alert("Rahmat! (Thanks for your feedback) 👍");
+      return;
+    }
+    if (mode === 'feedback_negative') {
+      const reason = prompt("Nima xato ketdi? (What went wrong?)");
+      if (reason) {
+        alert(`Fikringiz qabul qilindi: "${reason}". \nBiz bu xatoni to'g'irlash ustida ishlaymiz.`);
+        // Here you could technically trigger a regeneration using the feedback
+        // For now, we just acknowledge it as per MVP
+      }
+      return;
+    }
+    if (mode === 'share') {
+      navigator.clipboard.writeText(text);
+      alert("Matn nusxalandi va ulashish uchun tayyor! (Copied to clipboard)");
+      return;
+    }
+
     setIsLoading(true)
 
     // Add user message
@@ -29,10 +50,24 @@ export default function Home() {
       role: "user",
       content: text,
     }
+
+    // If this is the first message, add to history
+    if (messages.length === 0) {
+      setChatHistory(prev => [{
+        id: Date.now(),
+        title: text.length > 30 ? text.substring(0, 30) + "..." : text
+      }, ...prev])
+    }
+
     setMessages((prev) => [...prev, userMsg])
 
     try {
-      const response = await api.sendMessage(text, mode);
+      // Cast mode to the expected type and pass language context
+      const safeMode = (mode === 'translate' || mode === 'summarize' || mode === 'term') ? mode : 'translate';
+      // Use selected target language from options, or fallback to current app language
+      const targetLang = options?.targetLang || language;
+      const response = await api.sendMessage(text, safeMode, { targetLang });
+
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
@@ -41,6 +76,13 @@ export default function Home() {
       setMessages((prev) => [...prev, aiMsg])
     } catch (error) {
       console.error("Failed to send message:", error)
+      // Optional: Add error message to chat
+      const errorMsg: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "ai",
+        content: "Sorry, I encountered an error processing your request. Please try again."
+      }
+      setMessages((prev) => [...prev, errorMsg])
     } finally {
       setIsLoading(false)
     }
@@ -81,6 +123,11 @@ export default function Home() {
                     key={msg.id}
                     role={msg.role}
                     content={msg.content}
+                    onAction={(action, text) => handleSend(text, action)}
+                    onCopy={() => {
+                      navigator.clipboard.writeText(msg.content)
+                      alert("Matn nusxalandi! (Copied to clipboard)")
+                    }}
                   />
                 ))}
                 {isLoading && (
