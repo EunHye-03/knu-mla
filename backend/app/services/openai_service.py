@@ -1,7 +1,6 @@
 import os, openai, logging
 from openai import OpenAI
 
-
 logger = logging.getLogger("app")
 
 class OpenAIUpstreamError(Exception):
@@ -19,46 +18,23 @@ def call_openai_safety(client, request_id: str, **kwargs):
         
         # 429 - Rate limit
         if "rate limit" in msg or "429" in msg:
-            logger.warning(
-                "openai_rate_limited",
-                extra={"request_id": request_id},
-            )
-            raise OpenAIUpstreamError(
-                "RATE_LIMITED",
-                "OpenAI rate limit exceeded",
-            )
+            logger.warning("openai_rate_limited", extra={"request_id": request_id})
+            raise OpenAIUpstreamError("RATE_LIMITED", "OpenAI rate limit exceeded")
 
         # timeout / network 계열
         if "timeout" in msg or "timed out" in msg:
-            logger.warning(
-                "openai_timeout",
-                extra={"request_id": request_id},
-            )
-            raise OpenAIUpstreamError(
-                "OPENAI_ERROR",
-                "OpenAI request timeout",
-            )
+            logger.warning("openai_timeout", extra={"request_id": request_id})
+            raise OpenAIUpstreamError("OPENAI_ERROR", "OpenAI request timeout")
 
         # 인증 / 키 문제
         if "401" in msg or "403" in msg or "api key" in msg:
-            logger.error(
-                "openai_auth_failed",
-                extra={"request_id": request_id},
-            )
-            raise OpenAIUpstreamError(
-                "OPENAI_ERROR",
-                "OpenAI authentication failed",
-            )
+            logger.error("openai_auth_failed", extra={"request_id": request_id})
+            raise OpenAIUpstreamError("OPENAI_ERROR", "OpenAI authentication failed")
 
         # 그 외 OpenAI 에러
-        logger.error(
-            "openai_upstream_error",
-            extra={"request_id": request_id},
-        )
-        raise OpenAIUpstreamError(
-            "UPSTREAM_ERROR",
-            "Upstream service error",
-        )
+        logger.error("openai_upstream_error", extra={"request_id": request_id})
+        raise OpenAIUpstreamError("UPSTREAM_ERROR", "Upstream service error")
+
 
 class OpenAIServiceError(Exception):
     """Base OpenAI service error"""
