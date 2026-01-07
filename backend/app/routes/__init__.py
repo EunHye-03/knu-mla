@@ -4,9 +4,13 @@ from .health import router as health_router
 from .translate_router import router as translate_router
 from .summarize_router import router as summarize_router
 from .term_explain_router import router as term_explain_router
+from .speech_router import router as speech_router
+from .pdf_router import router as pdf_router
 
 router = APIRouter()
 router.include_router(health_router)
 router.include_router(translate_router)
 router.include_router(summarize_router)
 router.include_router(term_explain_router)
+router.include_router(speech_router)
+router.include_router(pdf_router)
