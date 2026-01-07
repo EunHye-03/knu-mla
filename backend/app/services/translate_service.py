@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 from app.services.openai_service import call_llm
+
+MAX_TEXT_LENGTH = 1000
 
 def translate_text(
   *,
@@ -17,25 +21,25 @@ def translate_text(
     Returns:
         str: 번역된 텍스트
     """
+    src_line = f"Source language: {source_lang}" if source_lang else "Source language: auto-detect"
     
-    system_prompt = (
-        "You are a friendly assistant for university students."
-    )
+    system_prompt = "\n".join([
+        "You are a professional translation engine.",
+        "Your task is to translate the input text accurately and naturally.",
+        "If the input is a single word or short phrase, translate it as a word or phrase.",
+        "If the input is a sentence or paragraph, translate it as a sentence or paragraph.",
+        "Do NOT explain, define, or add any extra information.",
+        "Output ONLY the translation.",
+        "No quotes. No labels. No extra lines."
+    ])
     
-    user_prompt = (
-        f"The following term is written in {source_lang or 'an unknown language'}.\n\n"
-        f"Please do the following:\n"
-        f"1. Translate the term into {target_lang}.\n"
-        f"2. Explain its meaning clearly and kindly for a university student.\n\n"
-        f"Rules:\n"
-        f"- First line: ONLY the translated term.\n"
-        f"- Leave one blank line.\n"
-        f"- Below that, keep the explanation concise (2–3 sentences).\n"
-        f"- Do NOT add labels like 'Term', 'Translation', or 'Explanation'.\n"
-        f"- Do NOT include pronunciation or romanization.\n"
-        f"- Use clear and natural language, but avoid overly casual expressions.\n"
-        f"{text}"
-        )
+    user_prompt = "\n".join([
+        f"{src_line}"
+        f"Target language: {target_lang}",
+        "",
+        "Text to translate:",
+        text,
+    ])
     
     translated_text = call_llm(
         system_prompt=system_prompt,
