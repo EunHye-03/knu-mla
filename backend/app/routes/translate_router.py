@@ -9,6 +9,8 @@ router = APIRouter(prefix="/translate", tags=["Translate"])
 def translate(request: TranslateRequest) -> TranslateResponse:
     request_id = str(uuid.uuid4())
     
+    request_id = str(uuid.uuid4())
+    
     try:
         translated_text = translate_text(
             text=request.text,
@@ -26,6 +28,6 @@ def translate(request: TranslateRequest) -> TranslateResponse:
       
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e)) # ex. OpenAI 호출 실패 
-      
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
