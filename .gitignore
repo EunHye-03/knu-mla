@@ -172,5 +172,3 @@ next-env.d.ts
 # Python cache
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
