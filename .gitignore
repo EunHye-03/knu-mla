@@ -169,8 +169,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Python cache
+# pycache
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
