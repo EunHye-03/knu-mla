@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException
 import uuid
-
+from fastapi import APIRouter, HTTPException
 from app.schemas.summarize import SummarizeData, SummarizeRequest, SummarizeResponse
 from app.services.summarize_service import summarize_text
 
@@ -22,9 +21,9 @@ def summarize(request: SummarizeRequest) -> SummarizeResponse:
                 summarized_text=summarized_text
             )
         )
-      
+
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e)) # ex. OpenAI 호출 실패 
-      
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
