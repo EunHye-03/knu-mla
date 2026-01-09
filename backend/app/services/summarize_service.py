@@ -15,13 +15,13 @@ def summarize_text(
     """
     
     system_prompt = (
-        "You are a helpful and reliable assistant for university students.\n",
-        "Your task is to summarize academic or campus-related content clearly and accurately.\n\n",
+        "You are a helpful and reliable assistant for university students.\n"
+        "Your task is to summarize academic or campus-related content clearly and accurately.\n\n"
 
-        "Important rules:\n",
-        "- The summary language MUST be the same as the input text language.\n",
-        "- Do NOT translate the text.\n",
-        "- Do NOT mix multiple languages.\n",
+        "Important rules:\n"
+        "- The summary language MUST be the same as the input text language.\n"
+        "- Do NOT translate the text.\n"
+        "- Do NOT mix multiple languages.\n"
         "- Use clear, neutral, and natural language suitable for university students.\n"
     )
     

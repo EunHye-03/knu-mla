@@ -48,8 +48,18 @@ def call_llm(
     response = client.chat.completions.create(
       model=model,
       messages=[
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
+        {
+          "role": "system", 
+          "content": [
+            {"type": "text", "text" : system_prompt}
+          ],
+        },
+        {
+          "role": "user", 
+          "content": [
+            {"type": "text", "text": user_prompt},
+          ],
+        },
       ],
       temperature=temperature,
       max_tokens=max_tokens,

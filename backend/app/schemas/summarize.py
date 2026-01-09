@@ -2,10 +2,10 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 class SummarizeRequest(BaseModel):
-  text: str = Field(..., min_length=1, description="원문 텍스트")
+  text: str = Field(..., min_length=1, max_length=1000, description="원문 텍스트")
 
 class SummarizeData(BaseModel):
-    summarized_text: str = Field(..., description="요약된 텍스트")
+  summarized_text: str = Field(..., description="요약된 텍스트")
 
 class SummarizeResponse(BaseModel):
   request_id: str
