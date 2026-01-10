@@ -18,6 +18,11 @@ class TermExplainRequest(BaseModel):
         description="Explanation target term (e.g., 전필, 패논패).",
         examples=["전필"],
     )
+    source_lang: Optional[str] = Field(
+        default=None,
+        examples=["ko"],
+        description="원문 언어 (옵션, 미지정 시 자동 처리)"
+    )    
     target_lang: LanguageCode = Field(
           ...,
           description="Target language for explanation.",
@@ -39,6 +44,7 @@ class TermExplainRequest(BaseModel):
 class TermExplainData(BaseModel):
   term: str = Field(..., description="설명할 용어")  
   source: Source = Field(..., description="설명 출처 (db 또는 ai_guess)")
+  translated_term: str = Field(..., description= "번역된 용어")
   explanation: str = Field(..., description="용어 설명")
   translated_explanation: str = Field(..., description="번역된 용어 설명")
 

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from app.db.session import Base
+from app.db.base_class import Base
 
 class Term(Base):
     __tablename__ = "term"

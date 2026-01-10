@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.schemas.term import TermExplainRequest, TermExplainResponse
 from app.services.term_service import term_service
 
-router = APIRouter(prefix="/term/explain", tags=["Term Explain"])
+router = APIRouter(prefix="/term/explain", tags=["Term-Explain"])
 
 
 @router.post("", response_model=TermExplainResponse)
