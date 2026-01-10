@@ -1,36 +1,11 @@
-import enum
-from sqlalchemy import (
-    BigInteger,
-    Text,
-    DateTime,
-    Enum,
-    ForeignKey,
-)
+from __future__ import annotations
+from sqlalchemy import BigInteger, Text, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from uuid import UUID
 
 from app.db.base_class import Base
-
-
-class Role(enum.Enum):
-    user = "user"
-    assistant = "assistant"
-
-
-class FeatureType(enum.Enum):
-    translate = "translate"
-    summarize = "summarize"
-    term = "term"
-    speech = "speech"
-    pdf_summarize = "pdf_summarize"
-    pdf_translate = "pdf_translate"
-
-
-class Lang(enum.Enum):
-    ko = "ko"
-    en = "en"
-    uz = "uz"
+from app.models.enums import Role, FeatureType, Lang
 
 
 class ChatMessage(Base):
@@ -44,10 +19,11 @@ class ChatMessage(Base):
         BigInteger,
         ForeignKey("chat_session.chat_session_id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
 
     role: Mapped[Role] = mapped_column(
-        Enum(Role, name="role_enum"),
+        Enum(Role, name="role_enum", native_enum=True),
         nullable=False,
     )
 
@@ -59,11 +35,11 @@ class ChatMessage(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
     source_lang: Mapped[Lang | None] = mapped_column(
-        Enum(Lang, name="lang_enum"),
+        Enum(Lang, name="lang_enum", native_enum=True),
         nullable=True,
     )
     target_lang: Mapped[Lang | None] = mapped_column(
-        Enum(Lang, name="lang_enum"),
+        Enum(Lang, name="lang_enum", native_enum=True),
         nullable=True,
     )
 

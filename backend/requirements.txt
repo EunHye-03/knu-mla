@@ -8,3 +8,5 @@ psycopg2-binary
 python-multipart
 passlib[bcrypt]
 python-jose
+pypdf
+faster-whisper

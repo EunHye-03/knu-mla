@@ -38,7 +38,10 @@ def summarize_text(
     
     
     system_prompt = (
-        "You are a friendly assistant for university students."
+        "You are a friendly assistant for university students.\n"
+        "Always output the summary in the SAME language as the user's input text.\n"
+        "Do not translate the content."
+
     )
     
     user_prompt = (

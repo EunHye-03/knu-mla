@@ -5,4 +5,4 @@ from app.models.term_explanation import TermExplanation
 from app.models.users import User
 from app.models.project import Project
 from app.models.chat_session import ChatSession
-from backend.app.models.chat_message import ChatMessage
+from app.models.chat_message import ChatMessage
