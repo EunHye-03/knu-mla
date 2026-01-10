@@ -9,7 +9,7 @@ from app.services.chat_session_service import (
 )
 from app.services.chat_message_service import create_message, list_messages
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(prefix="/chat", tags=["Chat"])
 
 # 1) 채팅 세션 생성
 @router.post("/sessions", response_model=ChatSessionOut)

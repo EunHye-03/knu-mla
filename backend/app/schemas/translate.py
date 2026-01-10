@@ -1,18 +1,18 @@
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
 
-LanguageCode = Literal["ko", "en", "uz"]
+from app.models.enums import Lang
 
 class TranslateRequest(BaseModel):
   text: str = Field(..., min_length=1, description="원문 텍스트")
-  source_lang: LanguageCode | None = Field(
+  source_lang: Lang | None = Field(
     default=None, description="원문 언어(옵션). 예: ko, en, uz"
   )
-  target_lang: LanguageCode = Field(..., min_length=1, description="번역할 언어. 예: ko, en, uz")
+  target_lang: Lang = Field(..., min_length=1, description="번역할 언어. 예: ko, en, uz")
 
 
 class TranslateData(BaseModel):
-  detected_lang: LanguageCode | None = Field(None, description="감지된 원문 언어")
+  detected_lang: Lang | None = Field(None, description="감지된 원문 언어")
   translated_text: str = Field(..., description="번역된 텍스트")
 
 

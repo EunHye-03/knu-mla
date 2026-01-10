@@ -13,16 +13,20 @@ router = APIRouter(prefix="/translate", tags=["Translate"])
 @router.post("", response_model=TranslateResponse)
 def translate(
     request: TranslateRequest,
-    chat_session_id: int | None = None,  # ✅ 프론트 연동용 (쿼리 파라미터)
+    chat_session_id: int | None = None,
     db: Session = Depends(get_db),
 ) -> TranslateResponse:
     request_id = str(uuid.uuid4())
     
-    translated_text = translate_text(
+    result = translate_text(
         text=request.text,
-        source_lang=request.source_lang or "auto",
+        source_lang=request.source_lang,
         target_lang=request.target_lang,
     )
+    
+    detected_lang = result.get("detected_lang")
+    translated_text = result["translated_text"]
+
     
     save_chat_messages(
         db=db,
@@ -37,7 +41,7 @@ def translate(
         request_id=request_id,
         success=True,
         data=TranslateData(
-            detected_lang=None,
+            detected_lang=detected_lang,
             translated_text=translated_text
         )
     )

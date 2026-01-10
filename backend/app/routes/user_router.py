@@ -3,16 +3,20 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.users import User
-from app.schemas.user import UserUpdateMe, UserResponse, UserPasswordUpdate
-from app.deps.auth import get_current_user
+from app.schemas.user import UserMe, UserMeUpdate, UserPasswordUpdate
+from app.dependencies.auth import get_current_user
 from app.services.user_service import update_user_me, change_password
 
-router = APIRouter(prefix="/user", tags=["user"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.patch("/me", response_model=UserResponse)
-def update_me(
-    req: UserUpdateMe,
+@router.get("/me", response_model=UserMe)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.patch("/me", response_model=UserMe)
+def update_info(
+    req: UserMeUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

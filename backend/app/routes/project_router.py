@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.schemas.project import ProjectCreate, ProjectOut
 from app.services.project_service import create_project, list_projects
 
-router = APIRouter(prefix="/projects", tags=["projects"])
+router = APIRouter(prefix="/projects", tags=["Projects"])
 
 @router.post("", response_model=ProjectOut)
 def create(data: ProjectCreate, db: Session = Depends(get_db)):

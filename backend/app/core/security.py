@@ -1,9 +1,3 @@
-"""_summary_
-  **“보안 유틸 모음”**이야. 
-  DB/라우터랑 분리해서, 어디서든 재사용 가능하게 만드는 게 목적.
-  암호/토큰 관련 로직만 담당.
-"""
-
 from datetime import datetime, timedelta, timezone
 import os
 
@@ -23,6 +17,23 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
 )
 
+_BCRYPT_MAX_BYTES = 72
+
+
+def _normalize_password(password: str) -> str:
+    """
+    bcrypt는 입력이 72 bytes를 넘으면 잘리거나 오류가 날 수 있어 안전하게 처리.
+    """
+    if password is None:
+        return ""
+    pw = str(password)
+
+    # utf-8 bytes 기준 72바이트로 자르기
+    b = pw.encode("utf-8")
+    if len(b) <= _BCRYPT_MAX_BYTES:
+        return pw
+    return b[:_BCRYPT_MAX_BYTES].decode("utf-8", errors="ignore")
+
 
 def hash_password(password: str) -> str:
     pw_str = str(password)
@@ -30,7 +41,13 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return pwd_context.verify(password, password_hash)
+    if not password_hash:
+        return False
+    pw = _normalize_password(password)
+    try:
+        return pwd_context.verify(pw, password_hash)
+    except Exception:
+        return False
 
 
 def create_access_token(subject: str, expires_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) -> str:
@@ -42,6 +59,7 @@ def create_access_token(subject: str, expires_minutes: int = ACCESS_TOKEN_EXPIRE
 def decode_token(token: str) -> str | None:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("sub")
+        sub = payload.get("sub")
+        return str(sub) if sub is not None else None
     except JWTError:
         return None

@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.schemas.message_feedback import FeedbackUpsertRequest, FeedbackUpsertResponse
 from app.services.message_feedback_service import upsert_message_feedback, get_message_feedback
 
-router = APIRouter(prefix="/feedback", tags=["feedback"])
+router = APIRouter(prefix="/feedback", tags=["Feedback"])
 
 
 @router.post("", response_model=FeedbackUpsertResponse)
