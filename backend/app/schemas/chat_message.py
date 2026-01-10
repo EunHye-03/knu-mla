@@ -1,11 +1,10 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Optional
 from uuid import UUID
 
-Role = Literal["user", "assistant"]
-FeatureType = Literal["translate", "summarize", "term", "speech", "pdf_summarize", "pdf_translate"]
-Lang = Literal["ko", "en", "uz"]
+from pydantic import BaseModel, Field, ConfigDict
+
+from app.models.enums import Role, FeatureType, Lang
 
 class ChatMessageCreate(BaseModel):
     role: Role
@@ -28,3 +27,5 @@ class ChatMessageOut(BaseModel):
 
     class Config:
         from_attributes = True
+        use_enum_values = True
+        

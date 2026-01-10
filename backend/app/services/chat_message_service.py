@@ -3,7 +3,7 @@ from sqlalchemy import select
 from uuid import UUID
 
 from app.models.chat_message import ChatMessage
-from app.schemas.chat_message import ChatMessageCreate
+from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut
 
 def create_message(db: Session, chat_session_id: int, data: ChatMessageCreate) -> ChatMessage:
     obj = ChatMessage(
@@ -20,7 +20,13 @@ def create_message(db: Session, chat_session_id: int, data: ChatMessageCreate) -
     db.refresh(obj)
     return obj
 
-def list_messages(db: Session, chat_session_id: int, limit: int = 50, offset: int = 0) -> list[ChatMessage]:
+
+def list_messages(
+    db: Session, 
+    chat_session_id: int, 
+    limit: int = 50, 
+    offset: int = 0
+) -> list[ChatMessage]:
     stmt = (
         select(ChatMessage)
         .where(ChatMessage.chat_session_id == chat_session_id)
@@ -28,4 +34,6 @@ def list_messages(db: Session, chat_session_id: int, limit: int = 50, offset: in
         .limit(limit)
         .offset(offset)
     )
-    return list(db.execute(stmt).scalars().all())
+    messages = list(db.execute(stmt).scalars().all())
+
+    return [ChatMessageOut.model_validate(m) for m in messages]
