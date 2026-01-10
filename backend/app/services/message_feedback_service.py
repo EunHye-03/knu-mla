@@ -7,10 +7,11 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.models.message_feedback import MessageFeedback
+from app.models.enums import RatingEnum
 
 
-def _rating_to_int(rating: str) -> int:
-    return 1 if rating == "like" else -1
+def _rating_to_int(rating: RatingEnum) -> int:
+    return 1 if rating == RatingEnum.like else -1
 
 
 def upsert_message_feedback(

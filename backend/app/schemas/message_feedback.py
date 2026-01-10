@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
-
-RatingLiteral = Literal["like", "dislike"]
+from app.models.enums import RatingEnum
 
 
 class FeedbackUpsertRequest(BaseModel):
     chat_session_id: int = Field(..., description="채팅 세션 ID")
     message_id: int = Field(..., description="피드백 대상 메시지 ID (assistant 메시지)")
-    rating: RatingLiteral = Field(..., description="like 또는 dislike")
+    rating: RatingEnum = Field(..., description="like 또는 dislike")
 
 
 class FeedbackUpsertResponse(BaseModel):

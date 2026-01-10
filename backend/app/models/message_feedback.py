@@ -27,10 +27,9 @@ class MessageFeedback(Base):
         ForeignKey("chat_message.message_id", ondelete="CASCADE"),
         nullable=False,
     )
+    
     chat_session_id: Mapped[int] = mapped_column(
-        BigInteger,
-        ForeignKey("chat_session.session_id", ondelete="CASCADE"),
-        nullable=False,
+        BigInteger, nullable=False,
     )
 
     # like=1, dislike=-1

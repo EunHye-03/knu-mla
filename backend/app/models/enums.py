@@ -19,3 +19,9 @@ class Lang(str, Enum):
     ko = "ko"
     en = "en"
     uz = "uz"
+    
+    
+class RatingEnum(str, Enum):
+    like = "like"
+    dislike = "dislike"
+
