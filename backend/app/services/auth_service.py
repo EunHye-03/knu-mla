@@ -20,7 +20,7 @@ def register_user(db: Session, req: UserRegister) -> User:
       user = User(
           user_name=req.user_name,
           password_hash=hash_password(req.password),
-          ui_lang=req.ui_lang,
+          user_lang=req.user_lang,
       )
       db.add(user)
       db.commit()

@@ -25,7 +25,7 @@ def create_chat_session(db: Session, data: ChatSessionCreate) -> ChatSession:
         user_id=data.user_id,
         project_id=data.project_id,
         title=data.title,
-        ui_lang=data.ui_lang,
+        user_lang=data.user_lang,
     )
     db.add(obj)
     db.commit()

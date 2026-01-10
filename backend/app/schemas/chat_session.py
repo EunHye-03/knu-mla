@@ -17,14 +17,14 @@ class ChatSessionCreate(BaseModel):
     user_id: int = Field(..., ge=1)
     project_id: Optional[int] = None
     title: Optional[str] = Field(default=None, max_length=200)
-    ui_lang: Lang = Lang.ko
+    user_lang: Lang = Lang.ko
 
 class ChatSessionOut(BaseModel):
     chat_session_id: int
     user_id: int
     project_id: Optional[int]
     title: Optional[str]
-    ui_lang: Lang
+    user_lang: Lang
     created_at: datetime
     updated_at: datetime
 

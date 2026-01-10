@@ -1,14 +1,15 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Literal
+from typing import Optional
 
-from app.schemas.validators import check_max_72_bytes 
+from app.schemas.validators import check_max_72_bytes
+from app.models.enums import Lang
 
 
 # 내 정보 
 class UserMe(BaseModel):
     user_id: int
     user_name: str
-    ui_lang: str
+    user_lang: Lang
 
     class Config:
         from_attributes = True  # SQLAlchemy ORM → Pydantic 변환
@@ -21,7 +22,7 @@ class UserMeUpdate(BaseModel):
         max_length=100,
         description="New user name (optional)",
     )
-    ui_lang: Optional[Literal["ko", "en", "uz"]] = None
+    user_lang: Lang | None
         
 
 #  비밀번호 변경 

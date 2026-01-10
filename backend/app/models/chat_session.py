@@ -28,8 +28,8 @@ class ChatSession(Base):
 
     title: Mapped[str | None] = mapped_column(String(200))
     
-    ui_lang: Mapped[Lang] = mapped_column(
-        Enum(Lang, name="ui_lang_enum", native_enum=True),
+    user_lang: Mapped[Lang] = mapped_column(
+        Enum(Lang, name="user_lang_enum", native_enum=True),
         nullable=False,
         default=Lang.ko,
     )

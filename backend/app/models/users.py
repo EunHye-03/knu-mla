@@ -17,7 +17,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
 
     # UI 언어 (ko / en / uz)
-    ui_lang = Column(String(5), nullable=False, server_default="ko")
+    user_lang = Column(String(5), nullable=False, server_default="ko")
 
     created_at = Column(
         DateTime(timezone=True),
@@ -34,8 +34,8 @@ class User(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "ui_lang IN ('ko','en','uz')",
-            name="ck_user_ui_lang",
+            "user_lang IN ('ko','en','uz')",
+            name="ck_user_user_lang",
         ),
     )
 

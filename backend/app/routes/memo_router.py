@@ -73,12 +73,12 @@ def patch_memo(
     memo_id: int,
     req: MemoUpdateRequest,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         memo = update_memo(
             db,
-            user_id=int(user["user_id"]),
+            user_id=current_user.user_id,
             memo_id=memo_id,
             new_content=req.content,
         )
@@ -103,11 +103,12 @@ def delete_memo_item(
     memo_id: int,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         delete_memo(
             db,
-            user_id=int(user["user_id"]),
+            user_id=current_user.user_id,
             memo_id=memo_id,
         )
         return {"success": True}
