@@ -1,7 +1,10 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import traceback
+
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.session import engine
 from app.db.base import Base
@@ -13,6 +16,19 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def on_startup():
         Base.metadata.create_all(bind=engine)
+
+    @app.exception_handler(Exception)
+    async def debug_exception_handler(request: Request, exc: Exception):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                },
+            },
+        )
 
     app.add_middleware(
         CORSMiddleware,

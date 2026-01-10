@@ -1,4 +1,4 @@
-import uuid
+import uuid, openai
 from typing import Optional
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from app.schemas.term import TermExplainData, TermExplainRequest, TermExplainRes
 
 from app.services.openai_service import call_llm
 from app.services.translate_service import translate_text
+from app.exceptions.error import AppError, ErrorCode
 
 
 class TermService:
@@ -46,38 +47,63 @@ class TermService:
         term_text: str,
         context: Optional[str],
     ) -> str:
-        system_prompt = "\n".join([
-            "You are a reliable assistant for Korean university students and international students.",
-            "Explain Korean university terms accurately and concisely.",
-            "You MUST follow the output rules exactly.",
-        ])
+        try:
+            system_prompt = "\n".join([
+                "You are a reliable assistant for Korean university students and international students.",
+                "Explain Korean university terms accurately and concisely.",
+                "You MUST follow the output rules exactly.",
+            ])
 
-        user_prompt = "\n".join([
-            "Task:",
-            "Explain the meaning of the given Korean university term in Korean.",
-            "",
-            f"Term: {term_text}",
-            f"Context: {context or ''}",
-            "",
-            "Output rules (MUST follow exactly):",
-            "- Output Korean only.",
-            "- Output ONLY the explanation text.",
-            "- Exactly 2 sentences.",
-            "- No quotes, no code blocks, no JSON, no labels, no headings.",
-            "- No line breaks (single line).",
-            "- Do NOT repeat the term itself in the explanation.",
-            "- Do NOT mention specific universities unless the context explicitly mentions them.",
-            "",
-            "Now write the explanation:",
-        ])
+            user_prompt = "\n".join([
+                "Task:",
+                "Explain the meaning of the given Korean university term in Korean.",
+                "",
+                f"Term: {term_text}",
+                f"Context: {context or ''}",
+                "",
+                "Output rules (MUST follow exactly):",
+                "- Output Korean only.",
+                "- Output ONLY the explanation text.",
+                "- Exactly 2 sentences.",
+                "- No quotes, no code blocks, no JSON, no labels, no headings.",
+                "- No line breaks (single line).",
+                "- Do NOT repeat the term itself in the explanation.",
+                "- Do NOT mention specific universities unless the context explicitly mentions them.",
+                "",
+                "Now write the explanation:",
+            ])
 
-        return call_llm(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            model="gpt-4o-mini",
-            temperature=0.3,
-            max_tokens=512,
-        )
+            return call_llm(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                model="gpt-4o-mini",
+                temperature=0.3,
+                max_tokens=512,
+            )
+
+        except openai.RateLimitError as e:
+            raise AppError(
+                message="Rate limit exceeded when calling OpenAI API.",
+                error_code=ErrorCode.RATE_LIMITED,
+                status_code=429,
+                detail=str(e),
+            )
+
+        except (openai.APIConnectionError, openai.APIStatusError) as e:
+            raise AppError(
+                message="Upstream error occurred when calling OpenAI API.",
+                error_code=ErrorCode.UPSTREAM_ERROR,
+                status_code=502,
+                detail=str(e),
+            )
+            
+        except Exception as e:
+            raise AppError(
+                message="Internal server error.",
+                error_code=ErrorCode.INTERNAL_ERROR,
+                status_code=500,
+                detail=str(e),
+            )
 
     # ---------- Main Service ----------
 
@@ -86,6 +112,7 @@ class TermService:
         db: Session,
         request: TermExplainRequest,
     ) -> TermExplainResponse:
+        
         request_id = str(uuid.uuid4())
 
         term_row = self.find_term_by_name(db, request.term)
