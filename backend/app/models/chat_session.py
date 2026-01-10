@@ -50,7 +50,7 @@ class ChatSession(Base):
 
     project = relationship("Project", back_populates="chat_sessions")
     messages = relationship(
-        "Chat",
+        "ChatMessage",
         back_populates="chat_session",
         cascade="all, delete-orphan",
     )

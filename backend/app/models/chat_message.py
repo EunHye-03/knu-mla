@@ -33,8 +33,8 @@ class Lang(enum.Enum):
     uz = "uz"
 
 
-class Chat(Base):
-    __tablename__ = "chat"
+class ChatMessage(Base):
+    __tablename__ = "chat_message"
 
     message_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, index=True
