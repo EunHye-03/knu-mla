@@ -1,5 +1,3 @@
-# app/models/user.py
-
 from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint
 from sqlalchemy.sql import func
 
@@ -7,7 +5,7 @@ from app.db.base_class import Base
 
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     # user_id (PK)
     user_id = Column(Integer, primary_key=True, index=True)
