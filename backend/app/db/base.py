@@ -1,0 +1,10 @@
+from app.db.base_class import Base
+
+from app.models.term import Term
+from app.models.term_explanation import TermExplanation
+from app.models.users import User
+from app.models.project import Project
+from app.models.chat_session import ChatSession
+from app.models.chat_message import ChatMessage
+from app.models.message_feedback import MessageFeedback
+from app.models.memo import Memo

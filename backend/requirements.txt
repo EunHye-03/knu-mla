@@ -6,4 +6,9 @@ pydantic
 sqlalchemy
 psycopg2-binary
 python-multipart
+passlib[bcrypt]
+python-jose
 pypdf
+faster-whisper
+bcrypt==3.2.2
+passlib==1.7.4

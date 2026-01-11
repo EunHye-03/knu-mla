@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+logger = logging.getLogger(__name__)
+
 from io import BytesIO
 from fastapi import UploadFile
 from pypdf import PdfReader
@@ -37,7 +40,7 @@ def extract_text_from_pdf(file: UploadFile) -> str:
     # PDF 파싱 & PDF에서 텍스트 추출
     try:
         reader = PdfReader(file.file)
-        texts = list[str] = []
+        texts: list[str] = []
         
         for page in reader.pages:
             page_text = page.extract_text()
@@ -52,6 +55,7 @@ def extract_text_from_pdf(file: UploadFile) -> str:
         return merged_text
       
     except Exception as e:
+        logger.exception("PDF extract failed: %s", e)
         raise ValueError("Failed to extract text from PDF file.") from e
       
     finally:
