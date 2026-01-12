@@ -21,9 +21,18 @@ class User(Base):
 
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
 
-    # UI 언어 (ko / en / uz)
     user_lang: Mapped[str] = mapped_column(
         String(5), nullable=False, server_default="ko"
+    )
+
+    profile_image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    background_image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
     )
 
     created_at: Mapped[DateTime] = mapped_column(
