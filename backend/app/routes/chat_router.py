@@ -23,14 +23,14 @@ db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# 2) 채팅 세션 목록 (user_id 필수, project_id 옵션)
+# 2) 채팅 세션 목록 (user_idx 필수, project_id 옵션)
 @router.get("/sessions", response_model=list[ChatSessionOut])
 def get_sessions(
     project_id: int | None = None, 
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return list_chat_sessions(db, user_id=user.user_id, project_id=project_id)
+    return list_chat_sessions(db, user_idx=user.user_idx, project_id=project_id)
 
 
 # 3) 메시지 목록
@@ -43,7 +43,7 @@ def get_session_messages(
     user: User = Depends(get_current_user),
 ):
     session = get_chat_session(db, chat_session_id)
-    if not session or session.user_id != user.user_id:
+    if not session or session.user_idx != user.user_idx:
         raise HTTPException(status_code=404, detail="Chat session not found")
     return list_messages(db, chat_session_id=chat_session_id, limit=limit, offset=offset)
 
@@ -63,14 +63,14 @@ def post_message(
         session = get_chat_session(db, chat_session_id)
 
         # 2) 있는데 남의 세션이면 차단
-        if session is not None and session.user_id != user.user_id:
+        if session is not None and session.user_idx != user.user_idx:
             # 보안상 숨기고 싶으면 404로 바꿔도 됨
             raise HTTPException(status_code=403, detail="Forbidden")
         
     # 3) 없으면 생성
     if session is None:
         cs_data = ChatSessionCreate(
-            user_id=user.user_id,
+            user_idx=user.user_idx,
             user_lang=getattr(data, "user_lang", "ko") or "ko",
             project_id=getattr(data, "project_id", None),
             title=getattr(data, "title", None),
@@ -81,4 +81,4 @@ def post_message(
             raise HTTPException(status_code=400, detail=str(e))
 
 
-    return create_message(db, user_id=session.user_id, chat_session_id=session.chat_session_id, data=data)
+    return create_message(db, user_idx=session.user_idx, chat_session_id=session.chat_session_id, data=data)

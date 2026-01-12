@@ -28,13 +28,13 @@ def post_memo(
     try:
         memo = create_memo(
             db,
-            user_id=current_user.user_id,
+            user_idx=current_user.user_idx,
             content=req.content,
             related_message_id=req.related_message_id,
         )
         return MemoResponse(
             memo_id=memo.memo_id,
-            user_id=memo.user_id,
+            user_idx=memo.user_idx,
             content=memo.content,
             related_message_id=memo.related_message_id,
             created_at=memo.created_at,
@@ -52,13 +52,13 @@ def get_memo_list(
 ):
     memos = list_memos(
         db,
-        user_id=current_user.user_id,
+        user_idx=current_user.user_idx,
         related_message_id=related_message_id,
     )
     return [
         MemoResponse(
             memo_id=m.memo_id,
-            user_id=m.user_id,
+            user_idx=m.user_idx,
             content=m.content,
             related_message_id=m.related_message_id,
             created_at=m.created_at,
@@ -78,13 +78,13 @@ def patch_memo(
     try:
         memo = update_memo(
             db,
-            user_id=current_user.user_id,
+            user_idx=current_user.user_idx,
             memo_id=memo_id,
             new_content=req.content,
         )
         return MemoResponse(
             memo_id=memo.memo_id,
-            user_id=memo.user_id,
+            user_idx=memo.user_idx,
             content=memo.content,
             related_message_id=memo.related_message_id,
             created_at=memo.created_at,
@@ -108,7 +108,7 @@ def delete_memo_item(
     try:
         delete_memo(
             db,
-            user_id=current_user.user_id,
+            user_idx=current_user.user_idx,
             memo_id=memo_id,
         )
         return {"success": True}

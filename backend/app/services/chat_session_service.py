@@ -26,7 +26,7 @@ def create_chat_session(
     
     
     obj = ChatSession(
-        user_id=data.user_id,
+        user_idx=data.user_idx,
         project_id=data.project_id,
         title=data.title,
         user_lang=data.user_lang,
@@ -37,8 +37,8 @@ def create_chat_session(
     return obj
 
 
-def list_chat_sessions(db: Session, user_id: int, project_id: int | None = None) -> list[ChatSession]:
-    stmt = select(ChatSession).where(ChatSession.user_id == user_id)
+def list_chat_sessions(db: Session, user_idx: int, project_id: int | None = None) -> list[ChatSession]:
+    stmt = select(ChatSession).where(ChatSession.user_idx == user_idx)
     if project_id is not None:
         stmt = stmt.where(ChatSession.project_id == project_id)
     stmt = stmt.order_by(ChatSession.updated_at.desc(), ChatSession.created_at.desc())

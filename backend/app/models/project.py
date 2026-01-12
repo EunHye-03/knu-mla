@@ -11,7 +11,7 @@ class Project(Base):
     project_session_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, index=True
     )
-    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    user_idx: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     project_name: Mapped[str] = mapped_column(String(200), nullable=False)
 

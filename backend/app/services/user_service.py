@@ -6,50 +6,82 @@ from app.models.users import User
 from app.core.security import verify_password, hash_password
 
 
-def get_user_by_id(db: Session, user_id: int) -> User | None:
-    return db.get(User, user_id)
+def get_user_by_idx(db: Session, user_idx: int) -> User | None:
+    return db.get(User, user_idx)
 
 
-def get_user_by_name(db: Session, user_name: str, *, only_active: bool = False) -> User | None:
-    q = db.query(User).filter(User.user_name == user_name)
+def get_user_by_id(db: Session, user_id: str, *, only_active: bool = False) -> User | None:
+    q = db.query(User).filter(User.user_id == user_id)
     if only_active:
         q = q.filter(User.is_active == True)
     return q.first()
+
+
+def get_user_by_email(db: Session, email: str) -> User | None:
+    return db.query(User).filter(User.email == email).first()
 
 
 def update_user_me(
     db: Session,
     *,
     user: User,
-    user_name: str | None = None,
+    user_id: str | None = None,
+    nickname: str | None = None,
+    email: str | None = None,
     user_lang: str | None = None,
 ) -> User:
     """
     로그인한 사용자 정보 수정
-    - user_name (중복 체크)
+    - user_id (중복 체크)
+    - nickname
+    - email
     - user_lang
     """
 
-    if user_name and user_name != user.user_name:
-        exists = (
-            db.query(User)
-            .filter(User.user_name == user_name)
-            .first()
-        )
-        if exists:
-            raise HTTPException(
-                status_code=409,
-                detail="USER_NAME_ALREADY_EXISTS",
-            )
-        user.user_name = user_name
+    # ---- user_id 변경 (로그인 ID) ----
+    if user_id is not None:
+        user_id = user_id.strip()
+        if not user_id:
+            raise HTTPException(status_code=422, detail="USER_ID_EMPTY")
 
-    if user_lang:
+        if user_id != user.user_id:
+            exists = db.query(User).filter(User.user_id == user_id).first()
+            if exists:
+                raise HTTPException(status_code=409, detail="USER_ID_ALREADY_EXISTS")
+            user.user_id = user_id
+
+    # ---- nickname 변경 ----
+    if nickname is not None:
+        nickname = nickname.strip()
+        if not nickname:
+            raise HTTPException(status_code=422, detail="NICKNAME_EMPTY")
+        user.nickname = nickname
+
+    # ---- email 변경 ----
+    if email is not None:
+        email = email.strip().lower()
+        if not email:
+            raise HTTPException(status_code=422, detail="EMAIL_EMPTY")
+
+        if email != user.email:
+            exists = db.query(User).filter(User.email == email).first()
+            if exists:
+                raise HTTPException(status_code=409, detail="EMAIL_ALREADY_EXISTS")
+            user.email = email
+
+    # ---- user_lang 변경 ----
+    if user_lang is not None:
+        user_lang = user_lang.strip()
+        # DB CHECK가 있어도 서비스 레벨에서 먼저 막아주면 좋음
+        if user_lang not in {"ko", "en", "uz"}:
+            raise HTTPException(status_code=422, detail="INVALID_USER_LANG")
         user.user_lang = user_lang
 
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
+
 
 
 def change_password(db: Session, *, user: User, current_password: str, new_password: str) -> None:

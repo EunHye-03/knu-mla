@@ -11,7 +11,7 @@ class ProjectUpdate(BaseModel):
 
 class ProjectOut(BaseModel):
     project_session_id: int
-    user_id: int
+    user_idx: int
     project_name: str
     created_at: datetime
     updated_at: datetime

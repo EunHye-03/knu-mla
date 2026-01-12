@@ -9,10 +9,10 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 
 # ---------- helpers ----------
 
-def _get_project_or_404(db: Session, project_session_id: int, user_id: int) -> Project:
+def _get_project_or_404(db: Session, project_session_id: int, user_idx: int) -> Project:
     stmt = select(Project).where(
         Project.project_session_id == project_session_id,
-        Project.user_id == user_id,
+        Project.user_idx == user_idx,
     )
     obj = db.execute(stmt).scalars().first()
     if not obj:
@@ -20,20 +20,20 @@ def _get_project_or_404(db: Session, project_session_id: int, user_id: int) -> P
     return obj
 
 
-def _get_chat_session_or_404(db: Session, chat_session_id: int, user_id: int) -> ChatSession:
+def _get_chat_session_or_404(db: Session, chat_session_id: int, user_idx: int) -> ChatSession:
     stmt = select(ChatSession).where(
         ChatSession.chat_session_id == chat_session_id,
-        ChatSession.user_id == user_id,
+        ChatSession.user_idx == user_idx,
     )
     obj = db.execute(stmt).scalars().first()
     if not obj:
         raise HTTPException(status_code=404, detail="Chat session not found")
     return obj
 
-def get_project_with_chat_sessions(db: Session, *, project_session_id: int, user_id: int) -> Project:
+def get_project_with_chat_sessions(db: Session, *, project_session_id: int, user_idx: int) -> Project:
     stmt = (
         select(Project)
-        .where(Project.project_session_id == project_session_id, Project.user_id == user_id)
+        .where(Project.project_session_id == project_session_id, Project.user_idx == user_idx)
         .options(selectinload(Project.chat_sessions))
     )
     obj = db.execute(stmt).scalars().first()
@@ -44,43 +44,43 @@ def get_project_with_chat_sessions(db: Session, *, project_session_id: int, user
 
 # ---------- project CRUD ----------
 
-def create_project(db: Session, *, user_id: int, data: ProjectCreate) -> Project:
-    obj = Project(user_id=user_id, project_name=data.project_name)
+def create_project(db: Session, *, user_idx: int, data: ProjectCreate) -> Project:
+    obj = Project(user_idx=user_idx, project_name=data.project_name)
     db.add(obj)
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def list_projects(db: Session, *, user_id: int) -> list[Project]:
+def list_projects(db: Session, *, user_idx: int) -> list[Project]:
     stmt = (
         select(Project)
-        .where(Project.user_id == user_id)
+        .where(Project.user_idx == user_idx)
         .order_by(Project.created_at.desc())
     )
     return list(db.execute(stmt).scalars().all())
 
 
-def get_project(db: Session, *, project_session_id: int, user_id: int) -> Project:
-    return _get_project_or_404(db, project_session_id, user_id)
+def get_project(db: Session, *, project_session_id: int, user_idx: int) -> Project:
+    return _get_project_or_404(db, project_session_id, user_idx)
 
 
-def update_project(db: Session, *, project_session_id: int, user_id: int, data: ProjectUpdate) -> Project:
-    obj = _get_project_or_404(db, project_session_id, user_id)
+def update_project(db: Session, *, project_session_id: int, user_idx: int, data: ProjectUpdate) -> Project:
+    obj = _get_project_or_404(db, project_session_id, user_idx)
     obj.project_name = data.project_name
     db.commit()
     db.refresh(obj)
     return obj
 
 
-def delete_project(db: Session, *, project_session_id: int, user_id: int) -> None:
-    _get_project_or_404(db, project_session_id, user_id)
+def delete_project(db: Session, *, project_session_id: int, user_idx: int) -> None:
+    _get_project_or_404(db, project_session_id, user_idx)
 
     # 내 세션만 안전하게 NULL 처리
     db.execute(
         update(ChatSession)
         .where(
-            ChatSession.user_id == user_id,
+            ChatSession.user_idx == user_idx,
             ChatSession.project_id == project_session_id,
         )
         .values(project_id=None)
@@ -89,7 +89,7 @@ def delete_project(db: Session, *, project_session_id: int, user_id: int) -> Non
     db.execute(
         delete(Project).where(
             Project.project_session_id == project_session_id,
-            Project.user_id == user_id,
+            Project.user_idx == user_idx,
         )
     )
     db.commit()
@@ -102,10 +102,10 @@ def attach_chat_session_to_project(
     *,
     project_session_id: int,
     chat_session_id: int,
-    user_id: int,
+    user_idx: int,
 ) -> None:
-    _get_project_or_404(db, project_session_id, user_id)
-    session = _get_chat_session_or_404(db, chat_session_id, user_id)
+    _get_project_or_404(db, project_session_id, user_idx)
+    session = _get_chat_session_or_404(db, chat_session_id, user_idx)
 
     # idempotent
     if session.project_id == project_session_id:
@@ -124,9 +124,9 @@ def detach_chat_session_from_project(
     *,
     project_session_id: int,
     chat_session_id: int,
-    user_id: int,
+    user_idx: int,
 ) -> None:
-    session = _get_chat_session_or_404(db, chat_session_id, user_id)
+    session = _get_chat_session_or_404(db, chat_session_id, user_idx)
 
     if session.project_id is None:
         raise HTTPException(status_code=409, detail="Chat session is not attached to any project")
@@ -137,13 +137,13 @@ def detach_chat_session_from_project(
     db.commit()
 
 
-def list_project_chat_sessions(db: Session, *, project_session_id: int, user_id: int) -> list[ChatSession]:
-    _get_project_or_404(db, project_session_id, user_id)
+def list_project_chat_sessions(db: Session, *, project_session_id: int, user_idx: int) -> list[ChatSession]:
+    _get_project_or_404(db, project_session_id, user_idx)
 
     stmt = (
         select(ChatSession)
         .where(
-            ChatSession.user_id == user_id,
+            ChatSession.user_idx == user_idx,
             ChatSession.project_id == project_session_id,
         )
         .order_by(ChatSession.created_at.desc())

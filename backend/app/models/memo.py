@@ -12,9 +12,9 @@ class Memo(Base):
 
     memo_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
-    user_id: Mapped[int] = mapped_column(
+    user_idx: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_idx", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -41,5 +41,5 @@ class Memo(Base):
     )
 
     __table_args__ = (
-        Index("idx_memo_user_created", "user_id", "created_at"),
+        Index("idx_memo_user_created", "user_idx", "created_at"),
     )

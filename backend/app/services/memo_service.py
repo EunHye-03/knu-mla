@@ -18,13 +18,13 @@ class ForbiddenMemoAccessError(Exception):
 def create_memo(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
     content: str,
     related_message_id: int | None,
 ) -> Memo:
     now = datetime.now(timezone.utc)
     memo = Memo(
-        user_id=user_id,
+        user_idx=user_idx,
         content=content,
         related_message_id=related_message_id,
         # server_default가 있어도 응답에 즉시 값 필요하면 여기서 넣는 게 편함
@@ -40,10 +40,10 @@ def create_memo(
 def list_memos(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
     related_message_id: int | None = None,
 ) -> list[Memo]:
-    stmt = select(Memo).where(Memo.user_id == user_id)
+    stmt = select(Memo).where(Memo.user_idx == user_idx)
     if related_message_id is not None:
         stmt = stmt.where(Memo.related_message_id == related_message_id)
 
@@ -58,7 +58,7 @@ def get_memo_by_id(db: Session, *, memo_id: int) -> Memo | None:
 def update_memo(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
     memo_id: int,
     new_content: str,
 ) -> Memo:
@@ -66,7 +66,7 @@ def update_memo(
     if memo is None:
         raise MemoNotFoundError()
 
-    if memo.user_id != user_id:
+    if memo.user_idx != user_idx:
         raise ForbiddenMemoAccessError()
 
     memo.content = new_content
@@ -81,14 +81,14 @@ def update_memo(
 def delete_memo(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
     memo_id: int,
 ) -> None:
     memo = db.get(Memo, memo_id)
     if memo is None:
         raise MemoNotFoundError()
 
-    if memo.user_id != user_id:
+    if memo.user_idx != user_idx:
         raise ForbiddenMemoAccessError()
 
     db.delete(memo)

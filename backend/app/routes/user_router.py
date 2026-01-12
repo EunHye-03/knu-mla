@@ -24,16 +24,26 @@ def update_info(
 ):
     """
     내 정보 수정 
-    - user_name
+    - user_id
+    - nickname
+    - email
     - user_lang
 
     """
-    return update_user_me(
-        db,
-        user=current_user,
-        user_name=req.user_name,
-        user_lang=req.user_lang,
-    )
+    try:
+        return update_user_me(
+                db,
+                user=current_user,
+                user_id=req.user_id,
+                nickname=req.nickname,
+                email=req.email,
+                user_lang=req.user_lang.value if req.user_lang else None,  # Lang enum이면 문자열로
+        )
+    except HTTPException:
+        raise
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="DB_ERROR")
+
   
   
 @router.patch("/password")
@@ -42,13 +52,20 @@ def update_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    change_password(
-        db,
-        user=current_user,
-        current_password=req.current_password,
-        new_password=req.new_password,
-    )
-    return {"success": True}
+    try:
+        change_password(
+            db,
+            user=current_user,
+            current_password=req.current_password,
+            new_password=req.new_password,
+        )
+        return {"success": True}
+
+    except HTTPException:
+        raise
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="DB_ERROR")
+
 
 
 @router.delete("/withdraw", response_model=UserWithdrawResponse)

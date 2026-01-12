@@ -15,7 +15,7 @@ class MemoUpdateRequest(BaseModel):
 
 class MemoResponse(BaseModel):
     memo_id: int
-    user_id: int
+    user_idx: int
     content: str
     related_message_id: int | None
     created_at: datetime
