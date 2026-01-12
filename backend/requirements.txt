@@ -3,3 +3,11 @@ uvicorn
 openai
 python-dotenv
 pydantic
+sqlalchemy
+psycopg2-binary
+python-multipart
+python-jose
+pypdf
+faster-whisper
+bcrypt>=3.2.2
+passlib[bcrypt]>=1.7.4
