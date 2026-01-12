@@ -4,9 +4,10 @@ from uuid import UUID
 
 from app.models.chat_message import ChatMessage
 from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut
+from app.services.chat_title_service import auto_set_chat_title_if_empty
 
 def create_message(db: Session, chat_session_id: int, data: ChatMessageCreate) -> ChatMessage:
-    obj = ChatMessage(
+    msg = ChatMessage(
         chat_session_id=chat_session_id,
         role=data.role,
         feature_type=data.feature_type,
@@ -15,10 +16,13 @@ def create_message(db: Session, chat_session_id: int, data: ChatMessageCreate) -
         target_lang=data.target_lang,
         request_id=data.request_id,  # None이면 DB default 사용
     )
-    db.add(obj)
+    db.add(msg)
     db.commit()
-    db.refresh(obj)
-    return obj
+    db.refresh(msg)
+    
+    auto_set_chat_title_if_empty(db, chat_session_id=chat_session_id)
+    
+    return msg
 
 
 def list_messages(
