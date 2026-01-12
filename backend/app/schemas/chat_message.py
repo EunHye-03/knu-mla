@@ -7,6 +7,10 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.models.enums import Role, FeatureType, Lang
 
 class ChatMessageCreate(BaseModel):
+    chat_session_id: Optional[int] = Field(
+        default=None,
+        description="없으면 새 채팅 세션 생성"
+    )
     role: Role
     feature_type: FeatureType
     content: str = Field(..., min_length=1)
