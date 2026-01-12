@@ -12,7 +12,6 @@ from app.services.user_service import update_user_me, change_password, withdraw_
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-
 @router.get("/me", response_model=UserMe)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
@@ -26,14 +25,14 @@ def update_info(
     """
     내 정보 수정 
     - user_name
-    - ui_lang
+    - user_lang
 
     """
     return update_user_me(
         db,
         user=current_user,
         user_name=req.user_name,
-        ui_lang=req.ui_lang,
+        user_lang=req.user_lang,
     )
   
   

@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from app.services.chat_session_service import get_chat_session
 from app.services.chat_message_service import create_message
 from app.schemas.chat_message import ChatMessageCreate
+from app.models.enums import Role
 
 
 def save_chat_messages(
@@ -30,26 +31,24 @@ def save_chat_messages(
     if not session:
         raise HTTPException(status_code=404, detail="Chat session not found")
 
-    # user message
     create_message(
         db,
         chat_session_id=chat_session_id,
         data=ChatMessageCreate(
-            role="user",
+            role=Role.user,
             feature_type=feature_type,
             content=user_content,
             source_lang=source_lang,
             target_lang=target_lang,
-            request_id=None,  # ⚠️ request_id UNIQUE 충돌 방지
+            request_id=None, 
         ),
     )
 
-    # assistant message
     create_message(
         db,
         chat_session_id=chat_session_id,
         data=ChatMessageCreate(
-            role="assistant",
+            role=Role.assistant,
             feature_type=feature_type,
             content=assistant_content,
             source_lang=source_lang,

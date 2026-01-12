@@ -22,12 +22,12 @@ def update_user_me(
     *,
     user: User,
     user_name: str | None = None,
-    ui_lang: str | None = None,
+    user_lang: str | None = None,
 ) -> User:
     """
     로그인한 사용자 정보 수정
     - user_name (중복 체크)
-    - ui_lang
+    - user_lang
     """
 
     if user_name and user_name != user.user_name:
@@ -43,8 +43,8 @@ def update_user_me(
             )
         user.user_name = user_name
 
-    if ui_lang:
-        user.ui_lang = ui_lang
+    if user_lang:
+        user.user_lang = user_lang
 
     db.add(user)
     db.commit()

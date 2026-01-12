@@ -1,11 +1,11 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from app.models.enums import Lang
 from app.schemas.validators import check_max_72_bytes 
 
 
 class UserRegister(BaseModel):
-    user_name: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=8, max_length=72) 
+    user_name: str = Field(..., min_length=3, max_length=50, examples=["nickname"])
+    password: str = Field(..., min_length=8, max_length=72, examples=["password"]) 
     user_lang: Lang = Field(..., description= "ko, en, uz")
     
     @field_validator("password")

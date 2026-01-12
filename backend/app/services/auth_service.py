@@ -21,7 +21,6 @@ def register_user(db: Session, req: UserRegister) -> User:
           user_name=req.user_name,
           password_hash=hash_password(req.password),
           user_lang=req.user_lang,
-          is_active=True,
       )
       db.add(user)
       db.commit()

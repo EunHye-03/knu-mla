@@ -1,5 +1,8 @@
 from enum import Enum
 
+class Source(str, Enum):
+    db = "db"
+    ai_guess = "ai_guess"
 
 class Role(str, Enum):
     user = "user"

@@ -44,7 +44,7 @@ class User(Base):
     __table_args__ = (
         CheckConstraint(
             "user_lang IN ('ko','en','uz')",
-            name="ck_user_lang",
+            name="ck_user_user_lang",
         ),
     )
 

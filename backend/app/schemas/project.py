@@ -1,8 +1,12 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+from app.schemas.chat_session import ChatSessionOut
+
 class ProjectCreate(BaseModel):
-    user_id: int = Field(..., ge=1)
+    project_name: str = Field(..., min_length=1, max_length=200)
+
+class ProjectUpdate(BaseModel):
     project_name: str = Field(..., min_length=1, max_length=200)
 
 class ProjectOut(BaseModel):
@@ -14,3 +18,6 @@ class ProjectOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProjectWithChatSessions(ProjectOut):
+    chat_sessions: list[ChatSessionOut] = []
