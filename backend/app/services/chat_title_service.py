@@ -53,7 +53,7 @@ def auto_set_chat_title_if_empty(db: Session, *, chat_session_id: int) -> None:
 
     pairs: List[Tuple[str, str]] = []
     for r in rows:
-        pairs.append(r.role.value, (r.content or "")[:400])
+        pairs.append((r.role.value, (r.content or "")[:400]))
 
     lang = session.user_lang.value
     system, user = _build_title_prompt(pairs, lang)

@@ -2,10 +2,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.models.chat_session import ChatSession
+from app.models.enums import Lang
 from app.schemas.chat_session import ChatSessionCreate
 from app.models.project import Project
 
-def create_chat_session(db: Session, data: ChatSessionCreate) -> ChatSession:    
+def create_chat_session(
+    db: Session, 
+    data: ChatSessionCreate
+) -> ChatSession:    
     project_id = data.project_id
 
     if project_id is not None and project_id <= 0:
@@ -44,3 +48,4 @@ def list_chat_sessions(db: Session, user_id: int, project_id: int | None = None)
 def get_chat_session(db: Session, chat_session_id: int) -> ChatSession | None:
     stmt = select(ChatSession).where(ChatSession.chat_session_id == chat_session_id)
     return db.execute(stmt).scalars().first()
+

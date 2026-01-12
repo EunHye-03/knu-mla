@@ -1,7 +1,6 @@
-import enum
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Literal, Optional
+from typing import Optional
 from app.models.enums import Role, FeatureType, Lang
 
 class ChatMessageOut(BaseModel):

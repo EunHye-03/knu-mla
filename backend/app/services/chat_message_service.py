@@ -9,7 +9,7 @@ from app.exceptions.error import AppError, ErrorCode
 from app.services.chat_title_service import auto_set_chat_title_if_empty
 
 
-def create_message(db: Session, *, user_id: int, data: ChatMessageCreate) -> ChatMessage:
+def create_message(db: Session, *, user_id: int, chat_session_id: int,  data: ChatMessageCreate) -> ChatMessage:
     # 1) chat_session_id 없으면 새 세션 생성
     if data.chat_session_id is None:
         session = ChatSession(

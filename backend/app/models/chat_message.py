@@ -2,7 +2,7 @@ from __future__ import annotations
 from sqlalchemy import BigInteger, Text, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from uuid import UUID
+from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base_class import Base
 from app.models.enums import Role, FeatureType, Lang
@@ -44,6 +44,7 @@ class ChatMessage(Base):
     )
 
     request_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
         nullable=False,
         unique=True,
         server_default=func.gen_random_uuid(),

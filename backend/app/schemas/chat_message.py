@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -16,7 +16,7 @@ class ChatMessageCreate(BaseModel):
     content: str = Field(..., min_length=1)
     source_lang: Optional[Lang] = None
     target_lang: Optional[Lang] = None
-    request_id: Optional[UUID] = None  # 없으면 DB default로 생성
+    request_id: UUID | None = None
 
 class ChatMessageOut(BaseModel):
     message_id: int
