@@ -1,0 +1,25 @@
+import os
+
+PASSWORD_RESET_TOKEN_TTL_MINUTES = int(
+    os.getenv("PASSWORD_RESET_TOKEN_TTL_MINUTES", "30")
+)
+
+PASSWORD_RESET_TOKEN_MIN_BYTES = int(
+    os.getenv("PASSWORD_RESET_TOKEN_MIN_BYTES", "32")
+)
+
+PASSWORD_RESET_TOKEN_HASH_ALGO = os.getenv(
+    "PASSWORD_RESET_TOKEN_HASH_ALGO", "sha256"
+)
+
+PASSWORD_RESET_TOKEN_PEPPER = os.getenv(
+    "PASSWORD_RESET_TOKEN_PEPPER", ""
+)
+
+SMTP_HOST = os.getenv("SMTP_HOST", "")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KNU MLA")
+
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")

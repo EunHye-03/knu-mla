@@ -7,6 +7,8 @@ from app.schemas.auth import UserRegister
 from app.core.security import hash_password, verify_password, create_access_token
 from app.services.user_service import get_user_by_id, get_user_by_email
 
+RESET_EXPIRE_MINUTES = 15
+
 
 def register_user(db: Session, req: UserRegister) -> User:
     """

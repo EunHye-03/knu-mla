@@ -1,4 +1,4 @@
-from sqlalchemy import String, DateTime, CheckConstraint, Boolean, Integer
+from sqlalchemy import BigInteger, String, DateTime, CheckConstraint, Boolean, Integer
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -8,9 +8,9 @@ from app.db.base_class import Base
 class User(Base):
     __tablename__ = "users"
 
-    user_idx: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_idx: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
 
-    # ✅ 로그인 ID (예전 user_id)
+    # ✅ 로그인 ID
     user_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
 
     # ✅ 닉네임
