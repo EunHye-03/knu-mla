@@ -20,7 +20,7 @@ class ChatMessageCreate(BaseModel):
 
 class ChatMessageOut(BaseModel):
     message_id: int
-    chat_session_id: int
+    chat_session_id: int = Field(..., description="채팅 세션 ID")
     role: Role
     feature_type: FeatureType
     content: str
