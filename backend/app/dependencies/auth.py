@@ -33,4 +33,11 @@ def get_current_user(
             detail="USER_NOT_FOUND",
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=401,
+            detail="USER_DEACTIVATED",
+        )
+
+    
     return user

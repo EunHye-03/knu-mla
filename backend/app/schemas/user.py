@@ -8,7 +8,7 @@ from app.schemas.validators import check_max_72_bytes
 class UserMe(BaseModel):
     user_id: int
     user_name: str
-    ui_lang: str
+    user_lang: str
 
     class Config:
         from_attributes = True  # SQLAlchemy ORM → Pydantic 변환
@@ -21,7 +21,7 @@ class UserMeUpdate(BaseModel):
         max_length=100,
         description="New user name (optional)",
     )
-    ui_lang: Optional[Literal["ko", "en", "uz"]] = None
+    user_lang: Optional[Literal["ko", "en", "uz"]] = None
         
 
 #  비밀번호 변경 
@@ -33,5 +33,14 @@ class UserPasswordUpdate(BaseModel):
     @classmethod
     def password_max_72_bytes(cls, v: str) -> str:
         return check_max_72_bytes(v)
+    
+# 회원 탈퇴
+class UserWithdrawRequest(BaseModel):
+    password: str = Field(min_length=1)
+
+class UserWithdrawResponse(BaseModel):
+    request_id: str
+    success: bool
+
 
 

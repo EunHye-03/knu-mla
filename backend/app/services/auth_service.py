@@ -20,11 +20,13 @@ def register_user(db: Session, req: UserRegister) -> User:
       user = User(
           user_name=req.user_name,
           password_hash=hash_password(req.password),
-          ui_lang=req.ui_lang,
+          user_lang=req.user_lang,
+          is_active=True,
       )
       db.add(user)
       db.commit()
       db.refresh(user)
+      
       return user
 
     except IntegrityError:
@@ -40,9 +42,14 @@ def authenticate_user(db: Session, *, user_name: str, password: str) -> User:
     """
     로그인 검증: user_name 조회 → 비밀번호 검증
     """
-    user = get_user_by_name(db, user_name)
+    user = get_user_by_name(db, user_name, only_active=True)
+    
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="INVALID_CREDENTIALS")
+    
+    if hasattr(user, "is_active") and not user.is_active:
+        raise HTTPException(status_code=401, detail="USER_DEACTIVATED")
+
     return user
 
 

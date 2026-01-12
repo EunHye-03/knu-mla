@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint, Boolean
 from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
 
@@ -17,7 +18,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
 
     # UI 언어 (ko / en / uz)
-    ui_lang = Column(String(5), nullable=False, server_default="ko")
+    user_lang = Column(String(5), nullable=False, server_default="ko")
 
     created_at = Column(
         DateTime(timezone=True),
@@ -32,10 +33,18 @@ class User(Base):
         onupdate=func.now(),
     )
 
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    
+    deleted_at: Mapped[DateTime | None] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=True
+    )
+
+
     __table_args__ = (
         CheckConstraint(
-            "ui_lang IN ('ko','en','uz')",
-            name="ck_user_ui_lang",
+            "user_lang IN ('ko','en','uz')",
+            name="ck_user_lang",
         ),
     )
 

@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.models.users import User
-from app.schemas.user import UserMe, UserMeUpdate, UserPasswordUpdate
+from app.schemas.user import UserMe, UserMeUpdate, UserPasswordUpdate, UserWithdrawRequest, UserWithdrawResponse
 from app.dependencies.auth import get_current_user
-from app.services.user_service import update_user_me, change_password
+from app.services.user_service import update_user_me, change_password, withdraw_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -48,3 +51,24 @@ def update_password(
     )
     return {"success": True}
 
+
+@router.delete("/withdraw", response_model=UserWithdrawResponse)
+def withdraw_me(
+    req: UserWithdrawRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    request_id = str(uuid.uuid4())
+
+    try:
+        withdraw_user(db, user=current_user, password=req.password)
+        return {"request_id": request_id, "success": True}
+
+    except HTTPException:
+        raise
+
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="DB_ERROR")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

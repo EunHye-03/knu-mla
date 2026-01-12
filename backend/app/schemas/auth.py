@@ -6,7 +6,7 @@ from app.schemas.validators import check_max_72_bytes
 class UserRegister(BaseModel):
     user_name: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8, max_length=72) 
-    ui_lang: Lang = Field(..., description= "ko, en, uz")
+    user_lang: Lang = Field(..., description= "ko, en, uz")
     
     @field_validator("password")
     @classmethod
