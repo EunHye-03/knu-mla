@@ -12,6 +12,9 @@ class UserMe(BaseModel):
     nickname: str
     email: EmailStr
     user_lang: Lang
+    profile_image_url: str
+    background_image_url: str
+    is_dark_mode: bool
 
     class Config:
         from_attributes = True  # SQLAlchemy ORM → Pydantic 변환
@@ -37,6 +40,18 @@ class UserMeUpdate(BaseModel):
     user_lang: Optional[Lang] = Field(
         default=None,
         description="New UI language (optional)",
+    )
+    profile_image_url: Optional[str] = Field(
+        default=None,
+        description="New profile image url (optional)"
+    )
+    background_image_url: Optional[str] = Field(
+        default=None,
+        description="New background image url (optional)"
+    )
+    is_dark_mode: Optional[bool] = Field(
+        default=None,
+        description="New dark mode (optional)"
     )
         
 
