@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import BigInteger, Text, DateTime, ForeignKey, func, Index
+from sqlalchemy import BigInteger, Text, DateTime, ForeignKey, func, Index, Boolean, text, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -18,9 +18,17 @@ class Memo(Base):
         nullable=False,
         index=True,
     )
+    
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
+    is_fix: Mapped[bool] = mapped_column(
+        Boolean, 
+        nullable=False,
+        server_default=text("false")
+    )
+    
     related_message_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("chat_message.message_id", ondelete="SET NULL"),

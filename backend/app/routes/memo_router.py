@@ -29,13 +29,17 @@ def post_memo(
         memo = create_memo(
             db,
             user_idx=current_user.user_idx,
+            title=req.title,
             content=req.content,
+            is_fix=req.is_fix,
             related_message_id=req.related_message_id,
         )
         return MemoResponse(
             memo_id=memo.memo_id,
             user_idx=memo.user_idx,
+            title=memo.title,
             content=memo.content,
+            is_fix=memo.is_fix,
             related_message_id=memo.related_message_id,
             created_at=memo.created_at,
             updated_at=memo.updated_at,
@@ -46,20 +50,20 @@ def post_memo(
 
 @router.get("", response_model=list[MemoResponse])
 def get_memo_list(
-    related_message_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     memos = list_memos(
         db,
         user_idx=current_user.user_idx,
-        related_message_id=related_message_id,
     )
     return [
         MemoResponse(
             memo_id=m.memo_id,
             user_idx=m.user_idx,
+            title=m.title,
             content=m.content,
+            is_fix=m.is_fix,
             related_message_id=m.related_message_id,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -80,12 +84,16 @@ def patch_memo(
             db,
             user_idx=current_user.user_idx,
             memo_id=memo_id,
-            new_content=req.content,
+            title=req.title,
+            content=req.content,
+            is_fix=req.is_fix,
         )
         return MemoResponse(
             memo_id=memo.memo_id,
             user_idx=memo.user_idx,
+            title=memo.title,
             content=memo.content,
+            is_fix=memo.is_fix,
             related_message_id=memo.related_message_id,
             created_at=memo.created_at,
             updated_at=memo.updated_at,
@@ -102,7 +110,6 @@ def patch_memo(
 def delete_memo_item(
     memo_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
     current_user: User = Depends(get_current_user),
 ):
     try:
