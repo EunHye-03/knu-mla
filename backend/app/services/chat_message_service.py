@@ -1,41 +1,43 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from uuid import UUID
 
 from app.models.chat_message import ChatMessage
 from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut
 from app.models.chat_session import ChatSession
 from app.exceptions.error import AppError, ErrorCode
-from app.services.chat_title_service import auto_set_chat_title_if_empty
 
 
-def create_message(db: Session, *, user_idx: int, chat_session_id: int,  data: ChatMessageCreate) -> ChatMessage:
+def create_message(
+    db: Session,
+    *,
+    user_idx: int,
+    data: ChatMessageCreate
+) -> ChatMessage:
+    """
+    메시지 생성
+    - data.chat_session_id 없으면 새 세션 생성
+    - 있으면 소유권 검증
+    - request_id는 optional string (None이면 그냥 None 저장)
+    """
+
     # 1) chat_session_id 없으면 새 세션 생성
     if data.chat_session_id is None:
-        session = ChatSession(
-            user_idx=user_idx,
-            title=None,
-        )
-        db.add(session)
-        db.commit()
-        db.refresh(session)
-        chat_session_id = session.chat_session_id
-    else:
-        chat_session_id = data.chat_session_id
+        raise AppError(ErrorCode.BAD_REQUEST)  # 혹은 VALIDATION_ERROR
 
-        # 2) 소유권 검증 (남의 세션에 메시지 못 넣게)
-        session = (
-            db.query(ChatSession)
-            .filter(
-                ChatSession.chat_session_id == chat_session_id,
-                ChatSession.user_idx == user_idx,
-            )
-            .first()
-        )
-        if not session:
-            raise AppError(ErrorCode.NOT_FOUND)
+    chat_session_id = data.chat_session_id
 
-    
+    # 2) 소유권 검증 (남의 세션에 메시지 못 넣게)
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.chat_session_id == chat_session_id,
+            ChatSession.user_idx == user_idx,
+        )
+        .first()
+    )
+    if not session:
+        raise AppError(ErrorCode.NOT_FOUND)
+
     msg = ChatMessage(
         chat_session_id=chat_session_id,
         role=data.role,
@@ -43,14 +45,13 @@ def create_message(db: Session, *, user_idx: int, chat_session_id: int,  data: C
         content=data.content,
         source_lang=data.source_lang,
         target_lang=data.target_lang,
-        request_id=data.request_id,  # None이면 DB default 사용
+        request_id=data.request_id,
     )
+
     db.add(msg)
     db.commit()
     db.refresh(msg)
-    
-    auto_set_chat_title_if_empty(db, chat_session_id=chat_session_id)
-    
+
     return msg
 
 
@@ -68,5 +69,4 @@ def list_messages(
         .offset(offset)
     )
     messages = list(db.execute(stmt).scalars().all())
-
     return [ChatMessageOut.model_validate(m) for m in messages]

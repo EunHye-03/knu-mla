@@ -16,8 +16,8 @@ class ChatSession(Base):
     chat_session_id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, index=True
     )
-    
-    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+
+    user_idx: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
 
     project_id: Mapped[int | None] = mapped_column(
         BigInteger,
@@ -27,7 +27,7 @@ class ChatSession(Base):
     )
 
     title: Mapped[str | None] = mapped_column(String(200))
-    
+
     user_lang: Mapped[Lang] = mapped_column(
         Enum(Lang, name="user_lang_enum", native_enum=True),
         nullable=False,
@@ -37,7 +37,7 @@ class ChatSession(Base):
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    
+
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -46,7 +46,7 @@ class ChatSession(Base):
     )
 
     project = relationship("Project", back_populates="chat_sessions")
-    
+
     messages = relationship(
         "ChatMessage",
         back_populates="chat_session",

@@ -1,12 +1,13 @@
-# app/services/password_reset_service.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 import hashlib, secrets, logging
 from urllib.parse import urlencode
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
+from collections.abc import Callable
 
 from app.models.users import User
 from app.core.security import hash_password
@@ -182,28 +183,29 @@ def reset_password_with_token(
     db: Session,
     token: str,
     new_password: str,
-    hash_password_fn: str,  # <- 프로젝트에서 쓰는 비밀번호 해시 함수 주입(예: get_password_hash)
+    hash_password_fn: Callable[[str], str],  # <- 프로젝트에서 쓰는 비밀번호 해시 함수 주입(예: get_password_hash)
 ) -> None:
     """
-    토큰으로 비밀번호 변경:
-    1) 토큰 검증
-    2) user 조회
-    3) user.password_hash 갱신
-    4) token.used_at 기록(1회성)
+        토큰으로 비밀번호 변경:
+        1) 토큰 검증
+        2) user 조회
+        3) user.password_hash 갱신
+        4) token.used_at 기록(1회성)
     """
     token_row = verify_reset_token(db=db, token=token)
 
     # user 조회
-    user_stmt = select(User).where(User.user_idx == token_row.user_idx, User.is_active == True)  # noqa: E712
+    user_stmt = select(User).where(
+        User.user_idx == token_row.user_idx, 
+        User.is_active == True,
+    )
     user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise AppError(message="User not found.", error_code=ErrorCode.USER_NOT_FOUND)
     
     # 비밀번호 해시 갱신
-    hash_password_fn = hash_password(new_password)
-    user.password_hash = hash_password_fn
+    user.password_hash = hash_password_fn(new_password)
 
     # 토큰 사용 처리
     token_row.used_at = _now()
-
     db.commit()
