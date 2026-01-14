@@ -59,6 +59,6 @@ def reset_password(
         db=db,
         token=req.token,
         new_password=req.new_password,
-        hash_password_fn=hash_password(req.new_password),
+        hash_password_fn=hash_password,
     )
     return {"success": True}
