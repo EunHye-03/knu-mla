@@ -57,6 +57,7 @@ def get_memo_list(
     memos = list_memos(
         db,
         user_idx=current_user.user_idx,
+        user_idx=current_user.user_idx,
         related_message_id=related_message_id,
     )
     return [
@@ -84,6 +85,7 @@ def patch_memo(
     try:
         memo = update_memo(
             db,
+            user_idx=current_user.user_idx,
             user_idx=current_user.user_idx,
             memo_id=memo_id,
             title=req.title,
@@ -117,6 +119,7 @@ def delete_memo_item(
     try:
         delete_memo(
             db,
+            user_idx=current_user.user_idx,
             user_idx=current_user.user_idx,
             memo_id=memo_id,
         )

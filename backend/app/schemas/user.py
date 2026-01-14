@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, EmailStr
 from typing import Optional
 
 from app.schemas.validators import check_max_72_bytes
@@ -7,8 +7,10 @@ from app.models.enums import Lang
 
 # 내 정보 
 class UserMe(BaseModel):
-    user_id: int
-    user_name: str
+    user_idx: int
+    user_id: str
+    nickname: str
+    email: EmailStr
     user_lang: Lang
 
     class Config:
@@ -16,13 +18,26 @@ class UserMe(BaseModel):
 
 # 내 정보 수정
 class UserMeUpdate(BaseModel):
-    user_name: Optional[str] = Field(
+    user_id: Optional[str] = Field(
         default=None,
         min_length=2,
         max_length=100,
-        description="New user name (optional)",
+        description="New user id (optional)",
     )
-    user_lang: Lang | None
+    nickname: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+        description="New nickname (optional)",
+    )
+    email: Optional[EmailStr] = Field(
+        default=None,
+        description="New email (optional)",
+    )
+    user_lang: Optional[Lang] = Field(
+        default=None,
+        description="New UI language (optional)",
+    )
         
 
 #  비밀번호 변경 
@@ -34,5 +49,18 @@ class UserPasswordUpdate(BaseModel):
     @classmethod
     def password_max_72_bytes(cls, v: str) -> str:
         return check_max_72_bytes(v)
+    
+# 회원 탈퇴
+class UserWithdrawRequest(BaseModel):
+    password: str = Field(min_length=1)
+    
+    @field_validator("password")
+    @classmethod
+    def password_max_72_bytes(cls, v: str) -> str:
+        return check_max_72_bytes(v)
 
+
+class UserWithdrawResponse(BaseModel):
+    request_id: str
+    success: bool
 

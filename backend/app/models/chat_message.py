@@ -1,8 +1,7 @@
 from __future__ import annotations
-from sqlalchemy import BigInteger, Text, DateTime, Enum, ForeignKey
+from sqlalchemy import BigInteger, Text, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base_class import Base
 from app.models.enums import Role, FeatureType, Lang
@@ -38,16 +37,16 @@ class ChatMessage(Base):
         Enum(Lang, name="lang_enum", native_enum=True),
         nullable=True,
     )
+
     target_lang: Mapped[Lang | None] = mapped_column(
         Enum(Lang, name="lang_enum", native_enum=True),
         nullable=True,
     )
 
-    request_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
-        nullable=False,
-        unique=True,
-        server_default=func.gen_random_uuid(),
+    request_id: Mapped[str | None] = mapped_column(
+        String(64), 
+        nullable=True,
+        index=True,
     )
 
     created_at: Mapped[DateTime] = mapped_column(

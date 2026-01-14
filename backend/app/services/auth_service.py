@@ -5,51 +5,65 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.models.users import User
 from app.schemas.auth import UserRegister
 from app.core.security import hash_password, verify_password, create_access_token
-from app.services.user_service import get_user_by_name
+from app.services.user_service import get_user_by_id, get_user_by_email
+
+RESET_EXPIRE_MINUTES = 15
 
 
 def register_user(db: Session, req: UserRegister) -> User:
     """
-    회원가입: user_name 중복 체크 → password 해시 → User 생성
+    회원가입: user_id 중복 체크 → password 해시 → User 생성
     """
-    exists = get_user_by_name(db, req.user_name)
-    if exists:
-        raise HTTPException(status_code=409, detail="USER_NAME_ALREADY_EXISTS")
+    if get_user_by_id(db, req.user_id):
+        raise HTTPException(status_code=409, detail="USER_ID_ALREADY_EXISTS")
 
+    if get_user_by_email(db, req.email):
+        raise HTTPException(status_code=409, detail="EMAIL_ALREADY_EXISTS")
+    
     try:
-      user = User(
-          user_name=req.user_name,
-          password_hash=hash_password(req.password),
-          user_lang=req.user_lang,
-      )
-      db.add(user)
-      db.commit()
-      db.refresh(user)
-      return user
-
+        user = User(
+            user_id=req.user_id,
+            nickname=req.nickname,
+            email=req.email,
+            password_hash=hash_password(req.password),
+            user_lang=req.user_lang,
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        return user
+  
     except IntegrityError:
+        # 동시성 등으로 unique 위반이 여기로 들어올 수 있음
         db.rollback()
-        raise HTTPException(status_code=409, detail="USER_NAME_ALREADY_EXISTS")
+        raise HTTPException(status_code=409, detail="DUPLICATE_USER")
 
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=500, detail="DB_ERROR")
 
 
-def authenticate_user(db: Session, *, user_name: str, password: str) -> User:
+def authenticate_user(db: Session, *, user_id: str, password: str) -> User:
     """
-    로그인 검증: user_name 조회 → 비밀번호 검증
+    로그인 검증: user_id 조회 → 비밀번호 검증
     """
-    user = get_user_by_name(db, user_name)
+    user = get_user_by_id(db, user_id, only_active=True)
+    
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="INVALID_CREDENTIALS")
+    
+    if hasattr(user, "is_active") and not user.is_active:
+        raise HTTPException(status_code=401, detail="USER_DEACTIVATED")
+
     return user
 
 
-def login_and_issue_token(db: Session, *, user_name: str, password: str) -> dict:
+def login_and_issue_token(db: Session, *, user_id: str, password: str) -> dict:
     """
     로그인 + 토큰 발급 (라우터에서 그대로 응답하기 좋게 dict 반환)
     """
-    user = authenticate_user(db, user_name=user_name, password=password)
-    token = create_access_token(subject=str(user.user_id))
+    user = authenticate_user(db, user_id=user_id, password=password)
+    token = create_access_token(subject=str(user.user_idx))
     return {"access_token": token, "token_type": "bearer"}

@@ -2,57 +2,88 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
+from app.models.chat_session import ChatSession
+from app.schemas.chat_message import ChatMessageCreate
 from app.services.chat_session_service import get_chat_session
 from app.services.chat_message_service import create_message
-from app.schemas.chat_message import ChatMessageCreate
-from app.models.enums import Role
+from app.services.chat_title_service import auto_set_chat_title_if_empty
+from app.models.enums import Role, FeatureType, Lang
+from app.exceptions.error import AppError, ErrorCode
 
 
 def save_chat_messages(
     *,
     db: Session,
+    user_idx: int,
     chat_session_id: Optional[int],
-    feature_type: str,
+    feature_type: FeatureType,
     user_content: str,
     assistant_content: str,
     request_id: str,
-    source_lang: str | None = None,
-    target_lang: str | None = None,
-) -> None:
+    source_lang: Lang | None = None,
+    target_lang: Lang | None = None,
+) -> int:
     """
-    chat_session_id가 있으면 user/assistant 메시지를 DB에 저장한다.
-    - DB가 request_id UNIQUE면 user 메시지는 request_id=None로 저장(충돌 방지)
-    - assistant 메시지는 request_id=request_id로 저장(응답과 매핑)
+    트랜잭션으로 user/assistant 메시지 2개를 "원자적으로" 저장.
+    - chat_session_id 없으면 새 세션 생성
+    - 두 메시지 모두 저장 성공해야 commit
+    - title 자동설정은 1번만 호출
     """
-    if chat_session_id is None:
-        return
+    def _work() -> int:
+        nonlocal chat_session_id
 
-    session = get_chat_session(db, chat_session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Chat session not found")
+        # 1) 세션 없으면 생성
+        if chat_session_id is None:
+            session = ChatSession(user_idx=user_idx, title=None)
+            db.add(session)
+            db.flush()          # chat_session_id 확보
+            db.refresh(session)
+            chat_session_id = session.chat_session_id
+        else:
+            session = get_chat_session(db, chat_session_id)
+            if not session:
+                raise AppError(ErrorCode.NOT_FOUND)
 
-    create_message(
-        db,
-        chat_session_id=chat_session_id,
-        data=ChatMessageCreate(
-            role=Role.user,
-            feature_type=feature_type,
-            content=user_content,
-            source_lang=source_lang,
-            target_lang=target_lang,
-            request_id=None, 
-        ),
-    )
+        # 2) user 메시지
+        create_message(
+            db,
+            user_idx=user_idx,
+            data=ChatMessageCreate(
+                chat_session_id=chat_session_id,
+                role=Role.user,
+                feature_type=feature_type,
+                content=user_content,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                request_id=None, 
+            ),
+        )
 
-    create_message(
-        db,
-        chat_session_id=chat_session_id,
-        data=ChatMessageCreate(
-            role=Role.assistant,
-            feature_type=feature_type,
-            content=assistant_content,
-            source_lang=source_lang,
-            target_lang=target_lang,
-            request_id=request_id,  # ✅ 응답 request_id 매핑
-        ),
-    )
+        # 3) assistant 메시지
+        create_message(
+            db,
+            user_idx=user_idx,
+            data=ChatMessageCreate(
+                chat_session_id=chat_session_id,
+                role=Role.assistant,
+                feature_type=feature_type,
+                content=assistant_content,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                request_id=request_id,
+            ),
+        )
+        
+        # 4) 제목 자동 설정 (딱 1번)
+        auto_set_chat_title_if_empty(db, chat_session_id=chat_session_id)
+    
+        # with db.begin() 블록을 정상 통과하면 자동 commit
+        return chat_session_id
+
+    # ✅ 이미 트랜잭션이 시작된 세션이면 begin()을 또 하지 말기
+    if db.in_transaction():
+        return _work()
+
+    # ✅ 트랜잭션이 없을 때만 begin으로 원자성 보장
+    with db.begin():
+        return _work()
