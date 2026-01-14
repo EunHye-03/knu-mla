@@ -18,7 +18,7 @@ from app.services.email_service import send_password_reset_email, EmailSendError
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/auth/password", tags=["Auth - Password Reset"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/forgot")
