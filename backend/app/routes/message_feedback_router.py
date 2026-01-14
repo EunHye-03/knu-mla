@@ -4,15 +4,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.dependencies.auth import get_current_user
 from app.schemas.message_feedback import FeedbackUpsertRequest, FeedbackUpsertResponse
 from app.services.message_feedback_service import upsert_message_feedback, get_message_feedback
 from app.dependencies.auth import get_current_user
 
-router = APIRouter(prefix="/feedback", tags=["Feedback"])
+router = APIRouter(prefix="/feedback", tags=["Feedback"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("", response_model=FeedbackUpsertResponse)
-def upsert_feedback(req: FeedbackUpsertRequest, db: Session = Depends(get_db), dependencies=[Depends(get_current_user)]):
+def upsert_feedback(req: FeedbackUpsertRequest, db: Session = Depends(get_db)):
     try:
         fb = upsert_message_feedback(
             db,

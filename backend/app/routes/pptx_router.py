@@ -5,12 +5,13 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.dependencies.auth import get_current_user
 from app.services.pptx_service import extract_text_from_pptx
 from app.services.summarize_service import summarize_text
 from app.services.translate_service import translate_text
 from app.services.chat_log_service import save_chat_messages
 
-router = APIRouter(prefix="", tags=["PPTX"])
+router = APIRouter(prefix="", tags=["PPTX"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("/summarize/pptx")
