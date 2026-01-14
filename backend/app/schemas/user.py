@@ -12,8 +12,8 @@ class UserMe(BaseModel):
     nickname: str
     email: EmailStr
     user_lang: Lang
-    profile_image_url: str
-    background_image_url: str
+    profile_image_url: Optional[str] = None
+    background_image_url: Optional[str] = None
     is_dark_mode: bool
 
     class Config:

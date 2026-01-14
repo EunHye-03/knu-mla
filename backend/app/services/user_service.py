@@ -29,6 +29,9 @@ def update_user_me(
     nickname: str | None = None,
     email: str | None = None,
     user_lang: str | None = None,
+    profile_image_url: str | None = None,
+    background_image_url: str | None = None,
+    is_dark_mode: bool | None = None,
 ) -> User:
     """
     로그인한 사용자 정보 수정
@@ -36,6 +39,9 @@ def update_user_me(
     - nickname
     - email
     - user_lang
+    - profile_image_url
+    - background_image_url
+    - is_dark_mode
     """
 
     # ---- user_id 변경 (로그인 ID) ----
@@ -77,6 +83,25 @@ def update_user_me(
             raise HTTPException(status_code=422, detail="INVALID_USER_LANG")
         user.user_lang = user_lang
 
+    # ---- profile_image_url 변경 ----
+    if profile_image_url is not None:
+        profile_image_url = profile_image_url.strip()
+        if not profile_image_url:
+            raise HTTPException(status_code=422, detail="PROFILE_IMAGE_URL_EMPTY")
+        user.profile_image_url = profile_image_url
+        
+    # ---- background_image_url 변경 ----
+    if background_image_url is not None:
+        background_image_url = background_image_url.strip()
+        if not background_image_url:
+            raise HTTPException(status_code=422, detail="BACKGROUND_IMAGE_URL_EMPTY")
+        user.background_image_url = background_image_url
+
+    # ---- is_dark_mode 변경 ----
+    if is_dark_mode is not None:
+        user.is_dark_mode = is_dark_mode
+
+    
     db.add(user)
     db.commit()
     db.refresh(user)

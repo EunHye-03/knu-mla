@@ -28,7 +28,9 @@ def update_info(
     - nickname
     - email
     - user_lang
-
+    - profile_image_url
+    - background_image_url
+    - is_dark_mode
     """
     try:
         return update_user_me(
@@ -38,6 +40,9 @@ def update_info(
                 nickname=req.nickname,
                 email=req.email,
                 user_lang=req.user_lang.value if req.user_lang else None,  # Lang enum이면 문자열로
+                profile_image_url=req.profile_image_url,
+                background_image_url=req.background_image_url,
+                is_dark_mode=req.is_dark_mode,
         )
     except HTTPException:
         raise
