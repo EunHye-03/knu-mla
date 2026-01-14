@@ -72,6 +72,51 @@ interface Translations {
     memo_title: string
     memo_placeholder: string
     save_memo: string
+
+    // New Features Update (Week 4)
+    // Auth
+    forgot_password: string
+    reset_password: string
+    email_label: string
+    email_placeholder: string
+    send_reset_link: string
+    back_to_login: string
+    new_password_label: string
+    confirm_password_label: string
+    reset_success: string
+    reset_error: string
+    signup_email_required: string
+
+    // Account
+    delete_account: string
+    delete_account_warning: string
+    delete_account_confirm_label: string
+    delete_account_button: string
+    account_deleted: string
+
+    // Memos Management
+    manage_memos: string
+    memo_renamed: string
+    memo_deleted: string
+    confirm_delete_memo: string
+
+    // Projects Management
+    manage_projects: string
+    edit_project: string
+    project_updated: string
+    project_deleted: string
+    confirm_delete_project: string
+    edit: string
+    delete: string
+
+    // Background Settings
+    bg_settings: string
+    enable_bg: string
+    select_bg: string
+
+    // Share
+    share: string
+    link_copied: string
 }
 
 
@@ -142,7 +187,46 @@ const translations: Record<Language, Translations> = {
         // Memo
         memo_title: "메모",
         memo_placeholder: "여기에 메모를 작성하세요...",
-        save_memo: "메모 저장"
+        save_memo: "메모 저장",
+
+        // Update Week 4
+        forgot_password: "비밀번호를 잊으셨나요?",
+        reset_password: "비밀번호 재설정",
+        email_label: "이메일",
+        email_placeholder: "name@example.com",
+        send_reset_link: "재설정 링크 보내기",
+        back_to_login: "로그인으로 돌아가기",
+        new_password_label: "새 비밀번호",
+        confirm_password_label: "비밀번호 확인",
+        reset_success: "비밀번호가 성공적으로 변경되었습니다.",
+        reset_error: "비밀번호 변경 중 오류가 발생했습니다.",
+        signup_email_required: "학교 이메일을 입력해주세요.",
+
+        delete_account: "계정 탈퇴",
+        delete_account_warning: "계정을 탈퇴하시면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+        delete_account_confirm_label: "탈퇴를 확인하려면 DELETE를 입력하세요",
+        delete_account_button: "계정 탈퇴",
+        account_deleted: "계정 탈퇴가 완료되었습니다.",
+
+        manage_memos: "메모 관리",
+        memo_renamed: "메모 이름이 변경되었습니다.",
+        memo_deleted: "메모가 삭제되었습니다.",
+        confirm_delete_memo: "이 메모를 삭제하시겠습니까?",
+
+        manage_projects: "프로젝트 관리",
+        edit_project: "프로젝트 수정",
+        project_updated: "프로젝트가 업데이트되었습니다.",
+        project_deleted: "프로젝트가 삭제되었습니다.",
+        confirm_delete_project: "이 프로젝트를 삭제하시겠습니까?",
+        edit: "수정",
+        delete: "삭제",
+
+        // Background
+        bg_settings: "배경 설정",
+        enable_bg: "대학 배경 화면 켜기",
+        select_bg: "배경 이미지 선택",
+        share: "공유",
+        link_copied: "링크가 복사되었습니다."
     },
     EN: {
         welcome: "Welcome to KNU Multilingual Assistant!",
@@ -210,7 +294,46 @@ const translations: Record<Language, Translations> = {
         // Memo
         memo_title: "Memo Pad",
         memo_placeholder: "Write your notes here...",
-        save_memo: "Save Memo"
+        save_memo: "Save Memo",
+
+        // Update Week 4
+        forgot_password: "Forgot password?",
+        reset_password: "Reset Password",
+        email_label: "Email",
+        email_placeholder: "name@example.com",
+        send_reset_link: "Send Reset Link",
+        back_to_login: "Back to Login",
+        new_password_label: "New Password",
+        confirm_password_label: "Confirm Password",
+        reset_success: "Password successfully reset.",
+        reset_error: "Error resetting password.",
+        signup_email_required: "Please enter your university email.",
+
+        delete_account: "Delete Account",
+        delete_account_warning: "Deleting your account will permanently remove all data. This action cannot be undone.",
+        delete_account_confirm_label: "Type DELETE to confirm",
+        delete_account_button: "Permanently Delete Account",
+        account_deleted: "Account deleted.",
+
+        manage_memos: "Manage Memos",
+        memo_renamed: "Memo renamed.",
+        memo_deleted: "Memo deleted.",
+        confirm_delete_memo: "Are you sure you want to delete this memo?",
+
+        manage_projects: "Manage Projects",
+        edit_project: "Edit Project",
+        project_updated: "Project updated.",
+        project_deleted: "Project deleted.",
+        confirm_delete_project: "Are you sure you want to delete this project?",
+        edit: "Edit",
+        delete: "Delete",
+
+        // Background
+        bg_settings: "Background Settings",
+        enable_bg: "Enable University Background",
+        select_bg: "Select Background Image",
+        share: "Share",
+        link_copied: "Link copied to clipboard."
     },
     UZ: {
         welcome: "KNU Multilingual Assistant'ga xush kelibsiz!",
@@ -278,7 +401,46 @@ const translations: Record<Language, Translations> = {
         // Memo
         memo_title: "Eslatmalar",
         memo_placeholder: "Eslatmalaringizni shu yerga yozing...",
-        save_memo: "Saqlash"
+        save_memo: "Saqlash",
+
+        // Update Week 4
+        forgot_password: "Parolni unutdingizmi?",
+        reset_password: "Parolni tiklash",
+        email_label: "Email",
+        email_placeholder: "name@example.com",
+        send_reset_link: "Tiklash havolasini yuborish",
+        back_to_login: "Kirishga qaytish",
+        new_password_label: "Yangi parol",
+        confirm_password_label: "Parolni tasdiqlash",
+        reset_success: "Parol muvaffaqiyatli o'zgartirildi.",
+        reset_error: "Parolni o'zgartirishda xatolik yuz berdi.",
+        signup_email_required: "Universitet emailini kiriting.",
+
+        delete_account: "Hisobni o'chirish",
+        delete_account_warning: "Hisobingizni o'chirsangiz, barcha ma'lumotlar butunlay yo'qoladi. Bu amalni qaytarib bo'lmaydi.",
+        delete_account_confirm_label: "Tasdiqlash uchun DELETE deb yozing",
+        delete_account_button: "Hisobni butunlay o'chirish",
+        account_deleted: "Hisob o'chirildi.",
+
+        manage_memos: "Eslatmalarni boshqarish",
+        memo_renamed: "Eslatma nomi o'zgartirildi.",
+        memo_deleted: "Eslatma o'chirildi.",
+        confirm_delete_memo: "Bu eslatmani o'chirishga ishonchingiz komilmi?",
+
+        manage_projects: "Loyihalarni boshqarish",
+        edit_project: "Loyihani tahrirlash",
+        project_updated: "Loyiha yangilandi.",
+        project_deleted: "Loyiha o'chirildi.",
+        confirm_delete_project: "Bu loyihani o'chirishga ishonchingiz komilmi?",
+        edit: "Tahrirlash",
+        delete: "O'chirish",
+
+        // Background
+        bg_settings: "Orqa Fon Sozlamalari",
+        enable_bg: "Universitet Fonini Yoqish",
+        select_bg: "Fon Rasmini Tanlash",
+        share: "Ulashish",
+        link_copied: "Havola nusxalandi."
     }
 }
 

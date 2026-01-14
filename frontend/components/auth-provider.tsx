@@ -6,14 +6,15 @@ import { useRouter, usePathname } from "next/navigation"
 interface User {
     id: string
     name: string
-    password?: string // In a real app, never store plain passwords on client
+    password?: string
+    email?: string // Added email support
     avatar?: string
 }
 
 interface AuthContextType {
     user: User | null
     login: (id: string, password?: string) => boolean
-    register: (name: string, id: string, password?: string) => void
+    register: (name: string, id: string, password?: string, email?: string) => Promise<void>
     logout: () => void
     updateUser: (data: Partial<User>) => void
     isLoading: boolean
@@ -37,8 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     React.useEffect(() => {
-        if (!isLoading && !user && pathname !== "/login" && pathname !== "/register") {
-            router.push("/login")
+        if (!isLoading && !user) {
+            const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password"]
+            const isPublicPath = publicPaths.some(path => pathname?.startsWith(path))
+
+            if (!isPublicPath) {
+                router.push("/login")
+            }
         }
     }, [user, isLoading, pathname, router])
 
@@ -66,28 +72,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true
     }
 
-    const register = (name: string, id: string, password?: string) => {
-        const newUser: User = {
-            id: id,
-            name: name,
-            avatar: "/mascot.jpg"
+    const register = async (name: string, id: string, password?: string, email?: string) => {
+        try {
+            // Call API
+            await import("@/services/api").then(m => m.api.signupWithEmail({ name, id, password, email }))
+
+            // On success, mock login
+            const newUser: User = {
+                id: id,
+                name: name,
+                email: email,
+                avatar: "/mascot.jpg"
+            }
+
+            // 1. Save to Session
+            localStorage.setItem("knu_mla_user", JSON.stringify(newUser))
+            setUser(newUser)
+
+            // 2. Save to Mock "Database"
+            const usersDbStr = localStorage.getItem("knu_mla_users_db")
+            const usersDb = usersDbStr ? JSON.parse(usersDbStr) as User[] : []
+            const tempDb = usersDb.filter(u => u.id !== id)
+            tempDb.push(newUser)
+            localStorage.setItem("knu_mla_users_db", JSON.stringify(tempDb))
+
+            router.push("/")
+        } catch (error) {
+            console.error("Registration failed", error)
+            alert("Registration failed. Please try again.")
         }
-
-        // 1. Save to Session
-        localStorage.setItem("knu_mla_user", JSON.stringify(newUser))
-        setUser(newUser)
-
-        // 2. Save to Mock "Database" so login remembers the name later
-        const usersDbStr = localStorage.getItem("knu_mla_users_db")
-        const usersDb = usersDbStr ? JSON.parse(usersDbStr) as User[] : []
-
-        // Remove existing if any (overwrite)
-        const tempDb = usersDb.filter(u => u.id !== id)
-        tempDb.push(newUser)
-
-        localStorage.setItem("knu_mla_users_db", JSON.stringify(tempDb))
-
-        router.push("/")
     }
 
     const logout = () => {

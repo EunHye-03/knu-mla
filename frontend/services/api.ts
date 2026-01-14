@@ -98,6 +98,79 @@ class ApiService {
                 throw new Error(`Unsupported mode: ${mode}`);
         }
     }
+
+    // --- Week 4 Features ---
+
+    // Auth
+    async signupWithEmail(data: any): Promise<any> {
+        return this.request('/auth/signup', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async requestPasswordReset(email: string): Promise<any> {
+        return this.request('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    }
+
+    async resetPassword(data: any): Promise<any> {
+        return this.request('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteAccount(): Promise<any> {
+        return this.request('/account', {
+            method: 'DELETE',
+        });
+    }
+
+    // Memos
+    async getMemos(): Promise<any[]> {
+        return this.request('/memos');
+    }
+
+    async updateMemo(id: string, data: any): Promise<any> {
+        return this.request(`/memos/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteMemo(id: string): Promise<any> {
+        return this.request(`/memos/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Projects
+    async createProject(data: any): Promise<any> {
+        return this.request('/projects', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getProjects(): Promise<any[]> {
+        return this.request('/projects');
+    }
+
+    async updateProject(id: string, data: any): Promise<any> {
+        return this.request(`/projects/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteProject(id: number): Promise<any> {
+        return this.request(`/projects/${id}`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 export const api = new ApiService();
