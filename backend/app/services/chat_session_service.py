@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 
 from app.models.chat_session import ChatSession
+from app.models.chat_message import ChatMessage
 from app.schemas.chat_session import ChatSessionCreate
 from app.models.project import Project
 
@@ -73,6 +74,53 @@ def get_chat_session_for_user(
         ChatSession.user_idx == user_idx,
     )
     return db.execute(stmt).scalars().first()
+
+
+def delete_chat_session(
+    *,
+    db: Session,
+    chat_message_id: int,
+    user_idx: int,
+) -> None:
+    """
+    메시지 1개 삭제
+    - message -> session 조인해서 '내 세션' 메시지인지 권한 체크
+    """
+
+    msg: ChatMessage | None = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.chat_message_id == chat_message_id)
+        .first()
+    )
+
+    if msg is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat message not found",
+        )
+
+    # 권한 체크: 해당 메시지가 속한 세션의 user_id가 나인지
+    session_obj: ChatSession | None = (
+        db.query(ChatSession)
+        .filter(ChatSession.chat_session_id == msg.chat_session_id)
+        .first()
+    )
+
+    if session_obj is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found",
+        )
+
+    if session_obj.user_idx != user_idx:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden",
+        )
+
+
+    db.delete(msg)
+    db.commit()
 
 
 # -----------------------------
@@ -213,3 +261,5 @@ def update_chat_session_title(
     db.commit()
     db.refresh(session)
     return session
+
+

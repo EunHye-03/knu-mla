@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from fastapi import HTTPException
 
 from app.models.chat_message import ChatMessage
 from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut
@@ -70,3 +71,49 @@ def list_messages(
     )
     messages = list(db.execute(stmt).scalars().all())
     return [ChatMessageOut.model_validate(m) for m in messages]
+
+
+def delete_chat_message(
+    *,
+    db: Session,
+    message_id: int,
+    user_idx: int,
+) -> None:
+    """
+    메시지 1개 삭제
+    - message -> session 조인해서 '내 세션' 메시지인지 권한 체크
+    """
+
+    msg: ChatMessage | None = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.message_id == message_id)
+        .first()
+    )
+
+    if msg is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat message not found",
+        )
+
+    # 권한 체크: 해당 메시지가 속한 세션의 user_id가 나인지
+    session_obj: ChatSession | None = (
+        db.query(ChatSession)
+        .filter(ChatSession.chat_session_id == msg.chat_session_id)
+        .first()
+    )
+
+    if session_obj is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found",
+        )
+
+    if session_obj.user_idx != user_idx:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden",
+        )
+
+    db.delete(msg)
+    db.commit()
