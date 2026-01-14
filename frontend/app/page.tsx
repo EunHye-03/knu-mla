@@ -16,11 +16,32 @@ type Message = {
 }
 
 export default function Home() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [messages, setMessages] = React.useState<Message[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
+  const [chatHistory, setChatHistory] = React.useState<{ id: number, title: string }[]>([])
 
-  const handleSend = async (text: string, mode: string) => {
+  const handleSend = async (text: string, mode: string, options?: { targetLang?: string }) => {
+    // Determine if it's a feedback action or a real message
+    if (mode === 'feedback_positive') {
+      alert("Rahmat! (Thanks for your feedback) 👍");
+      return;
+    }
+    if (mode === 'feedback_negative') {
+      const reason = prompt("Nima xato ketdi? (What went wrong?)");
+      if (reason) {
+        alert(`Fikringiz qabul qilindi: "${reason}". \nBiz bu xatoni to'g'irlash ustida ishlaymiz.`);
+        // Here you could technically trigger a regeneration using the feedback
+        // For now, we just acknowledge it as per MVP
+      }
+      return;
+    }
+    if (mode === 'share') {
+      navigator.clipboard.writeText(text);
+      alert("Matn nusxalandi va ulashish uchun tayyor! (Copied to clipboard)");
+      return;
+    }
+
     setIsLoading(true)
 
     // Add user message
@@ -29,10 +50,24 @@ export default function Home() {
       role: "user",
       content: text,
     }
+
+    // If this is the first message, add to history
+    if (messages.length === 0) {
+      setChatHistory(prev => [{
+        id: Date.now(),
+        title: text.length > 30 ? text.substring(0, 30) + "..." : text
+      }, ...prev])
+    }
+
     setMessages((prev) => [...prev, userMsg])
 
     try {
-      const response = await api.sendMessage(text, mode);
+      // Cast mode to the expected type and pass language context
+      const safeMode = (mode === 'translate' || mode === 'summarize' || mode === 'term') ? mode : 'translate';
+      // Use selected target language from options, or fallback to current app language
+      const targetLang = options?.targetLang || language;
+      const response = await api.sendMessage(text, safeMode, { targetLang });
+
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
@@ -41,6 +76,13 @@ export default function Home() {
       setMessages((prev) => [...prev, aiMsg])
     } catch (error) {
       console.error("Failed to send message:", error)
+      // Optional: Add error message to chat
+      const errorMsg: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "ai",
+        content: "Sorry, I encountered an error processing your request. Please try again."
+      }
+      setMessages((prev) => [...prev, errorMsg])
     } finally {
       setIsLoading(false)
     }
@@ -56,16 +98,23 @@ export default function Home() {
         <main className="flex flex-1 flex-col items-center p-4 md:p-6 overflow-y-auto">
           <div className="flex w-full max-w-3xl flex-1 flex-col">
             {messages.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center text-center space-y-4 py-20">
-                <div className="rounded-full bg-red-100 p-4 dark:bg-red-900/20">
-                  <div className="text-4xl">👋</div>
+              <div className="flex flex-1 flex-col items-center justify-center text-center space-y-8 py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-red-100 blur-2xl dark:bg-red-900/20 animate-pulse" />
+                  <div className="relative rounded-2xl bg-gradient-to-tr from-red-50 to-white p-6 shadow-xl ring-1 ring-black/5 dark:from-zinc-900 dark:to-zinc-800 dark:ring-white/10">
+                    <div className="text-5xl">👋</div>
+                  </div>
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  {t.welcome}
-                </h1>
-                <p className="max-w-[500px] text-muted-foreground">
-                  {t.sub_welcome}
-                </p>
+                <div className="space-y-2 max-w-md">
+                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-600 bg-clip-text text-transparent dark:from-white dark:to-zinc-400">
+                    {t.welcome}
+                  </h1>
+                  <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                    {t.sub_welcome}
+                  </p>
+                </div>
+
+                {/* Feature Cards/Suggestions could go here if text allows, keeping it clean for now */}
               </div>
             ) : (
               <div className="flex-1 pb-4">
@@ -74,6 +123,11 @@ export default function Home() {
                     key={msg.id}
                     role={msg.role}
                     content={msg.content}
+                    onAction={(action, text) => handleSend(text, action)}
+                    onCopy={() => {
+                      navigator.clipboard.writeText(msg.content)
+                      alert("Matn nusxalandi! (Copied to clipboard)")
+                    }}
                   />
                 ))}
                 {isLoading && (

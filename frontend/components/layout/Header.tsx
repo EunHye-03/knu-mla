@@ -20,10 +20,10 @@ export function Header() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="h-8 w-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    className="h-8 w-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-transform active:scale-90"
                 >
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-amber-500" />
+                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-blue-400" />
                     <span className="sr-only">Toggle theme</span>
                 </Button>
 
@@ -35,8 +35,8 @@ export function Header() {
                         size="sm"
                         onClick={() => setLanguage("KR")}
                         className={`h-7 px-3 rounded-full text-xs font-medium transition-all ${language === "KR"
-                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white"
-                                : "hover:bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
+                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white"
+                            : "hover:bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
                             }`}
                     >
                         KR
@@ -46,8 +46,8 @@ export function Header() {
                         size="sm"
                         onClick={() => setLanguage("EN")}
                         className={`h-7 px-3 rounded-full text-xs font-medium transition-all ${language === "EN"
-                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white"
-                                : "hover:bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
+                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white"
+                            : "hover:bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
                             }`}
                     >
                         EN
@@ -57,8 +57,8 @@ export function Header() {
                         size="sm"
                         onClick={() => setLanguage("UZ")}
                         className={`h-7 px-3 rounded-full text-xs font-medium transition-all ${language === "UZ"
-                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white"
-                                : "hover:bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
+                            ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white"
+                            : "hover:bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
                             }`}
                     >
                         UZ
