@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, String, DateTime, CheckConstraint, Boolean, Integer
+from sqlalchemy import BigInteger, String, DateTime, CheckConstraint, Boolean, text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,13 +10,10 @@ class User(Base):
 
     user_idx: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
 
-    # ✅ 로그인 ID
     user_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
 
-    # ✅ 닉네임
     nickname: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    # ✅ 이메일
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
 
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
@@ -35,6 +32,12 @@ class User(Base):
         nullable=True,
     )
 
+    is_dark_mode: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable = False,
+        server_default=text("fault"),
+    )
+    
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
