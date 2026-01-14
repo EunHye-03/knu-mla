@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import BigInteger, Text, DateTime, ForeignKey, func, Index
+from sqlalchemy import BigInteger, Text, DateTime, ForeignKey, func, Index, Boolean, text, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -12,15 +12,23 @@ class Memo(Base):
 
     memo_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
-    user_id: Mapped[int] = mapped_column(
+    user_idx: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_idx", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
+    
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
+    is_fix: Mapped[bool] = mapped_column(
+        Boolean, 
+        nullable=False,
+        server_default=text("false")
+    )
+    
     related_message_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("chat_message.message_id", ondelete="SET NULL"),
@@ -41,5 +49,5 @@ class Memo(Base):
     )
 
     __table_args__ = (
-        Index("idx_memo_user_created", "user_id", "created_at"),
+        Index("idx_memo_user_created", "user_idx", "created_at"),
     )

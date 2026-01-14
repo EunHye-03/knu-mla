@@ -18,16 +18,19 @@ class ForbiddenMemoAccessError(Exception):
 def create_memo(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
+    title: str,
     content: str,
+    is_fix: bool,
     related_message_id: int | None,
 ) -> Memo:
     now = datetime.now(timezone.utc)
     memo = Memo(
-        user_id=user_id,
+        user_idx=user_idx,
+        title=title,
         content=content,
+        is_fix=is_fix,
         related_message_id=related_message_id,
-        # server_default가 있어도 응답에 즉시 값 필요하면 여기서 넣는 게 편함
         created_at=now,
         updated_at=now,
     )
@@ -40,12 +43,9 @@ def create_memo(
 def list_memos(
     db: Session,
     *,
-    user_id: int,
-    related_message_id: int | None = None,
+    user_idx: int,
 ) -> list[Memo]:
-    stmt = select(Memo).where(Memo.user_id == user_id)
-    if related_message_id is not None:
-        stmt = stmt.where(Memo.related_message_id == related_message_id)
+    stmt = select(Memo).where(Memo.user_idx == user_idx)
 
     stmt = stmt.order_by(desc(Memo.created_at))
     return list(db.execute(stmt).scalars().all())
@@ -58,21 +58,30 @@ def get_memo_by_id(db: Session, *, memo_id: int) -> Memo | None:
 def update_memo(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
     memo_id: int,
-    new_content: str,
+    title: str | None = None,
+    content: str | None = None,
+    is_fix: bool | None = None,
 ) -> Memo:
     memo = db.get(Memo, memo_id)
     if memo is None:
         raise MemoNotFoundError()
 
-    if memo.user_id != user_id:
+    if memo.user_idx != user_idx:
         raise ForbiddenMemoAccessError()
 
-    memo.content = new_content
+    if title is not None:
+        memo.title = title
+        
+    if content is not None:
+        memo.content = content
+    
+    if is_fix is not None:
+        memo.is_fix = is_fix
+        
     memo.updated_at = datetime.now(timezone.utc)
 
-    db.add(memo)
     db.commit()
     db.refresh(memo)
     return memo
@@ -81,14 +90,14 @@ def update_memo(
 def delete_memo(
     db: Session,
     *,
-    user_id: int,
+    user_idx: int,
     memo_id: int,
 ) -> None:
     memo = db.get(Memo, memo_id)
     if memo is None:
         raise MemoNotFoundError()
 
-    if memo.user_id != user_id:
+    if memo.user_idx != user_idx:
         raise ForbiddenMemoAccessError()
 
     db.delete(memo)
