@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple, List
+from typing import Optional
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 from sqlalchemy import func, select
 
 from app.models.chat_session import ChatSession
@@ -30,7 +31,7 @@ def create_chat_session(
             raise ValueError("Invalid project_id (project not found)")
 
     obj = ChatSession(
-        user_id=data.user_id,
+        user_idx=data.user_idx,
         project_id=data.project_id,
         title=data.title,
         user_lang=data.user_lang,
@@ -161,3 +162,54 @@ def list_recent_chat_sessions(
     )
 
     return sessions, total, limit, offset
+
+
+# -----------------------------
+# 세션 제목 수정
+# -----------------------------
+
+def update_chat_session_title(
+    *,
+    db: Session,
+    chat_session_id: int,
+    user_idx: int,
+    title: Optional[str],
+) -> ChatSession:
+    """
+    채팅 세션 제목 수정
+    - 본인(user_idx) 소유 세션만 수정 가능
+    - title이 None이거나 공백이면 제목 제거(None으로 저장)
+    """
+
+    session: ChatSession | None = (
+        db.query(ChatSession)
+        .filter(ChatSession.chat_session_id == chat_session_id)
+        .first()
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found",
+        )
+
+    if session.user_idx != user_idx:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden",
+        )
+
+    # UX 편의: "" / "   " 들어오면 제목 삭제로 처리
+    normalized_title: Optional[str]
+    if title is None:
+        normalized_title = None
+    else:
+        t = title.strip()
+        normalized_title = t if t else None
+
+    session.title = normalized_title
+
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session

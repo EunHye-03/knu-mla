@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user
 from app.models.users import User
-from app.schemas.chat_session import ChatSessionCreate, ChatSessionOut
+from app.schemas.chat_session import (
+    ChatSessionCreate, 
+    ChatSessionOut,
+    ChatSessionTitleUpdateRequest,
+    ChatSessionTitleUpdateResponse,
+    ChatSessionTitleUpdateData,
+)
 from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut
 from app.schemas.chat_session_search import (
     ChatSessionListItem, 
@@ -19,6 +25,7 @@ from app.services.chat_session_service import (
     get_chat_session, 
     search_chat_sessions_by_title,
     list_recent_chat_sessions,
+    update_chat_session_title,
 )
 from app.services.chat_message_service import create_message, list_messages
 
@@ -177,5 +184,26 @@ def search_sessions(
             total=total,
             limit=limit,
             offset=offset,
+        ),
+    )
+
+
+@router.patch("", response_model=ChatSessionTitleUpdateResponse)
+def patch_title(
+    req: ChatSessionTitleUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ChatSessionTitleUpdateResponse:
+    updated = update_chat_session_title(
+        db=db,
+        chat_session_id=req.chat_session_id,
+        user_idx=current_user.user_idx,  # 너희 프로젝트 user pk 필드명에 맞춰
+        title=req.title,
+    )
+    return ChatSessionTitleUpdateResponse(
+        success=True,
+        data=ChatSessionTitleUpdateData(
+            chat_session_id=updated.chat_session_id,
+            title=updated.title,
         ),
     )
