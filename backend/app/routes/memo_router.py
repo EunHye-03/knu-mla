@@ -50,15 +50,12 @@ def post_memo(
 
 @router.get("", response_model=list[MemoResponse])
 def get_memo_list(
-    related_message_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     memos = list_memos(
         db,
         user_idx=current_user.user_idx,
-        user_idx=current_user.user_idx,
-        related_message_id=related_message_id,
     )
     return [
         MemoResponse(
@@ -86,10 +83,9 @@ def patch_memo(
         memo = update_memo(
             db,
             user_idx=current_user.user_idx,
-            user_idx=current_user.user_idx,
             memo_id=memo_id,
             title=req.title,
-            new_content=req.content,
+            content=req.content,
             is_fix=req.is_fix,
         )
         return MemoResponse(
@@ -119,7 +115,6 @@ def delete_memo_item(
     try:
         delete_memo(
             db,
-            user_idx=current_user.user_idx,
             user_idx=current_user.user_idx,
             memo_id=memo_id,
         )

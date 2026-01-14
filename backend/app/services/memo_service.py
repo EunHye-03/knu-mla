@@ -59,7 +59,6 @@ def update_memo(
     db: Session,
     *,
     user_idx: int,
-    user_idx: int,
     memo_id: int,
     title: str | None = None,
     content: str | None = None,
@@ -69,7 +68,6 @@ def update_memo(
     if memo is None:
         raise MemoNotFoundError()
 
-    if memo.user_idx != user_idx:
     if memo.user_idx != user_idx:
         raise ForbiddenMemoAccessError()
 
@@ -93,14 +91,12 @@ def delete_memo(
     db: Session,
     *,
     user_idx: int,
-    user_idx: int,
     memo_id: int,
 ) -> None:
     memo = db.get(Memo, memo_id)
     if memo is None:
         raise MemoNotFoundError()
 
-    if memo.user_idx != user_idx:
     if memo.user_idx != user_idx:
         raise ForbiddenMemoAccessError()
 
