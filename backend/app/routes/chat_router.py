@@ -1,17 +1,29 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.dependencies.auth import get_current_user
 from app.models.users import User
 from app.schemas.chat_session import ChatSessionCreate, ChatSessionOut
 from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut
+from app.schemas.chat_session_search import (
+    ChatSessionListItem, 
+    ChatSessionSearchData, 
+    ChatSessionSearchResponse, 
+)
 from app.services.chat_session_service import (
-    create_chat_session, list_chat_sessions, get_chat_session
+    create_chat_session, 
+    list_chat_sessions, 
+    get_chat_session, 
+    search_chat_sessions_by_title,
+    list_recent_chat_sessions,
 )
 from app.services.chat_message_service import create_message, list_messages
-from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/chat", tags=["Chat"], dependencies=[Depends(get_current_user)])
+
 
 # 1) 채팅 세션 생성
 @router.post("/sessions", response_model=ChatSessionOut)
@@ -82,3 +94,88 @@ def post_message(
 
 
     return create_message(db, user_idx=session.user_idx, chat_session_id=session.chat_session_id, data=data)
+
+
+# 5) 최근 세션 목록 (검색창 비었을 때 프론트에서 호출)
+@router.get("", response_model=ChatSessionSearchResponse)
+def get_recent_sessions(
+    limit: int | None = Query(default=20, ge=1, le=100),
+    offset: int | None = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ChatSessionSearchResponse:
+    """
+    최근 세션 목록 (검색어 없을 때 기본 리스트로 사용)
+    """
+    sessions, total, limit, offset = list_recent_chat_sessions(
+        db=db,
+        user_idx=current_user.user_idx,
+        limit=limit,
+        offset=offset,
+    )
+
+    items = [
+        ChatSessionListItem(
+            chat_session_id=s.chat_session_id,
+            title=s.title,
+            created_at=s.created_at,
+            updated_at=getattr(s, "updated_at", None),
+        )
+        for s in sessions
+    ]
+
+    return ChatSessionSearchResponse(
+        success=True,
+        data=ChatSessionSearchData(
+            query="",
+            results=items,
+            total=total,
+            limit=limit,
+            offset=offset,
+        ),
+        error=None,
+    )
+
+# 6) 세션 제목 검색
+@router.get("/search", response_model=ChatSessionSearchResponse)
+def search_sessions(
+    query: str = Query(..., min_length=1, description="세션 제목 검색어"),
+    limit: int | None = Query(default=20, ge=1, le=100),
+    offset: int | None = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ChatSessionSearchResponse:
+    """
+    세션 제목(title) 기반 검색
+    """
+    try:
+        sessions, total, limit, offset = search_chat_sessions_by_title(
+            db=db,
+            user_idx=current_user.user_idx,
+            query=query,
+            limit=limit,
+            offset=offset,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    items = [
+        ChatSessionListItem(
+            chat_session_id=s.chat_session_id,
+            title=s.title,
+            created_at=s.created_at,
+            updated_at=getattr(s, "updated_at", None),
+        )
+        for s in sessions
+    ]
+
+    return ChatSessionSearchResponse(
+        success=True,
+        data=ChatSessionSearchData(
+            query=query,
+            results=items,
+            total=total,
+            limit=limit,
+            offset=offset,
+        ),
+    )

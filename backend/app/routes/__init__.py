@@ -14,6 +14,7 @@ from .pdf_router import router as pdf_router
 from .memo_router import router as memo_router
 from .password_reset_router import router as password_reset_router
 
+
 router = APIRouter()
 router.include_router(health_router)
 router.include_router(translate_router)

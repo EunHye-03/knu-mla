@@ -1,9 +1,15 @@
+from __future__ import annotations
+
+from typing import Optional, Tuple, List
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.models.chat_session import ChatSession
 from app.schemas.chat_session import ChatSessionCreate
 from app.models.project import Project
+
+DEFAULT_LIMIT = 20
+MAX_LIMIT = 100
 
 
 def create_chat_session(
@@ -66,3 +72,92 @@ def get_chat_session_for_user(
         ChatSession.user_idx == user_idx,
     )
     return db.execute(stmt).scalars().first()
+
+
+# -----------------------------
+# 세션 제목 검색용
+# -----------------------------
+
+def _sanitize_pagination(limit: Optional[int], offset: Optional[int]) -> tuple[int, int]:
+    """
+    limit/offset 기본값 및 상한 처리
+    """
+    if limit is None:
+        limit = DEFAULT_LIMIT
+    if offset is None:
+        offset = 0
+
+    if limit < 1:
+        limit = 1
+    if limit > MAX_LIMIT:
+        limit = MAX_LIMIT
+
+    if offset < 0:
+        offset = 0
+
+    return limit, offset
+
+
+def search_chat_sessions_by_title(
+    *,
+    db: Session,
+    user_idx: int,
+    query: str,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> tuple[list[ChatSession], int, int, int]:
+    """
+    제목(title) 부분 검색으로 채팅 세션을 조회한다.
+
+    Returns:
+        (sessions, total, limit, offset)
+    """
+    q = (query or "").strip()
+    if not q:
+        # 정책: 빈 검색어는 서비스 레벨에서 막기 (원하면 최근목록으로 바꿔도 됨)
+        raise ValueError("query must not be empty")
+
+    limit, offset = _sanitize_pagination(limit, offset)
+
+    base = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_idx == user_idx)          # 🔒 본인 것만
+        .filter(ChatSession.title.isnot(None))           # title NULL 제외 (원하면 제거 가능)
+        .filter(ChatSession.title.ilike(f"%{q}%"))       # 부분 검색(대소문자 무시)
+    )
+
+    total = base.with_entities(func.count()).scalar() or 0
+
+    sessions = (
+        base.order_by(ChatSession.created_at.desc())     # 최신순 (원하면 updated_at desc로)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+    return sessions, total, limit, offset
+
+
+def list_recent_chat_sessions(
+    *,
+    db: Session,
+    user_idx: int,
+    limit: Optional[int] = DEFAULT_LIMIT,
+    offset: Optional[int] = None,
+) -> tuple[list[ChatSession], int, int, int]:
+    """
+    (선택) 검색어 없을 때 보여줄 최근 세션 목록
+    """
+    limit, offset = _sanitize_pagination(limit, offset)
+
+    base = db.query(ChatSession).filter(ChatSession.user_idx == user_idx)
+    total = base.with_entities(func.count()).scalar() or 0
+
+    sessions = (
+        base.order_by(ChatSession.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+    return sessions, total, limit, offset
