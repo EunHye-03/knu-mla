@@ -7,5 +7,5 @@ def check_max_72_bytes(v: str) -> str:
 
     b = v.encode("utf-8")
     if len(b) > 72:
-        raise ValueError("Password must be at most 72 bytes (UTF-8).")
+        return b[:72].decode("utf-8", errors="ignore")
     return v
