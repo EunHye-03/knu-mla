@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 class SummarizeRequest(BaseModel):
-  text: str = Field(..., min_length=1, description="원문 텍스트")
+  text: str = Field(..., min_length=1, max_length=1000, description="원문 텍스트")
 
 
 class SummarizeData(BaseModel):
