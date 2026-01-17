@@ -96,8 +96,7 @@ def delete_chat_session(
 
     if msg is None:
         raise AppError(
-            ErrorCode.CHAT_MESSAGE_NOT_FOUND,
-            detail="Chat message not found",
+            error_code=ErrorCode.CHAT_MESSAGE_NOT_FOUND
         )
 
     # 권한 체크: 해당 메시지가 속한 세션의 user_id가 나인지
@@ -109,14 +108,12 @@ def delete_chat_session(
 
     if session_obj is None:
         raise AppError(
-            ErrorCode.CHAT_SESSION_NOT_FOUND,
-            detail="Chat session not found",
+            error_code=ErrorCode.CHAT_SESSION_NOT_FOUND
         )
 
     if session_obj.user_idx != user_idx:
         raise AppError(
-            ErrorCode.CHAT_SESSION_FORBIDDEN,
-            detail="Forbidden",
+            error_code=ErrorCode.CHAT_SESSION_FORBIDDEN
         )
 
 
@@ -238,14 +235,12 @@ def update_chat_session_title(
 
     if session is None:
         raise AppError(
-            ErrorCode.CHAT_SESSION_NOT_FOUND,
-            detail="Chat session not found",
+            error_code=ErrorCode.CHAT_SESSION_NOT_FOUND
         )
 
     if session.user_idx != user_idx:
         raise AppError(
-            ErrorCode.CHAT_SESSION_FORBIDDEN,
-            detail="Forbidden",
+            error_code=ErrorCode.CHAT_SESSION_FORBIDDEN
         )
 
     # UX 편의: "" / "   " 들어오면 제목 삭제로 처리

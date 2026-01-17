@@ -36,7 +36,7 @@ def create_app() -> FastAPI:
                     "request_id": request_id,
                     "error_code" : "INTERNAL_SERVER_ERROR",
                     "message": str(exc),
-                    "details": {"type": type(exc).__name__},
+                    "detail": {"type": type(exc).__name__},
                 },
             )
 

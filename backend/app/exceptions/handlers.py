@@ -22,6 +22,9 @@ def _get_request_id(request: Request) -> str:
     return rid or "unknown"
 
 
+def _safe_message(message: str | None, fallback: str) -> str:
+    m = (message or "").strip()
+    return m if m else fallback
 
 def _json_error(
     *,
@@ -29,13 +32,13 @@ def _json_error(
     status_code: int,
     error_code: ErrorCode,
     message: str,
-    details: dict[str, Any] | None = None,
+    detail: dict[str, Any] | None = None,
 ) -> JSONResponse:
     payload = ErrorResponse(
         request_id=_get_request_id(request),
         error_code=error_code,
-        message=message,
-        details=details or {},
+        message=_safe_message(message, fallback="Unexpected error"),
+        detail=detail or {},
     )
     return JSONResponse(status_code=status_code, content=payload.model_dump())
 
@@ -56,7 +59,7 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         status_code=exc.status_code,
         error_code=exc.error_code,
         message=exc.message,
-        details=exc.details,
+        detail=exc.detail,
     )
 
 
@@ -72,7 +75,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
         status_code=400,
         error_code=ErrorCode.INVALID_REQUEST,
         message="Invalid request.",
-        details={"errors": exc.errors()},
+        detail={"errors": exc.errors()},
     )
 
 
@@ -114,7 +117,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         status_code=status,
         error_code=error_code,
         message=message,
-        details={"detail": exc.detail},
+        detail={"detail": exc.detail},
     )
 
 
@@ -132,7 +135,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         status_code=500,
         error_code=ErrorCode.INTERNAL_SERVER_ERROR,
         message="Internal server error.",
-        details={"type": exc.__class__.__name__},
+        detail={"type": exc.__class__.__name__},
     )
 
 

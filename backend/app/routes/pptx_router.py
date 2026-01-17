@@ -43,7 +43,7 @@ def summarize_pptx(
         }
 
     except Exception as e:
-        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR, detail=str(e))
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, detail={"reason": str(e)})
 
 
 @router.post("/translate/pptx")
@@ -82,4 +82,4 @@ def translate_pptx(
         }
 
     except Exception as e:
-        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR, detail=str(e))
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, detail={"reason":str(e)})

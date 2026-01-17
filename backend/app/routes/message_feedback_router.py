@@ -31,7 +31,7 @@ def upsert_feedback(req: FeedbackUpsertRequest, db: Session = Depends(get_db)):
         )
     except Exception as e:
         # FK 없거나 message_id/session_id가 잘못된 경우 등 DB 예외가 여기로 옴
-        raise AppError(ErrorCode.INVALID_REQUEST)
+        raise AppError(error_code=ErrorCode.INVALID_REQUEST)
 
 
 @router.get("", response_model=FeedbackUpsertResponse | None)

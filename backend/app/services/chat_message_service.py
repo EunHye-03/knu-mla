@@ -23,7 +23,7 @@ def create_message(
 
     # 1) chat_session_id 없으면 새 세션 생성
     if data.chat_session_id is None:
-        raise AppError(ErrorCode.INVALID_REQUEST)  # 혹은 VALIDATION_ERROR
+        raise AppError(error_code=ErrorCode.INVALID_REQUEST)  # 혹은 VALIDATION_ERROR
 
     chat_session_id = data.chat_session_id
 
@@ -37,7 +37,7 @@ def create_message(
         .first()
     )
     if not session:
-        raise AppError(ErrorCode.CHAT_SESSION_NOT_FOUND)
+        raise AppError(error_code=ErrorCode.CHAT_SESSION_NOT_FOUND)
 
     msg = ChatMessage(
         chat_session_id=chat_session_id,
@@ -92,7 +92,7 @@ def delete_chat_message(
 
     if msg is None:
         raise AppError(
-            ErrorCode.CHAT_MESSAGE_NOT_FOUND
+            error_code=ErrorCode.CHAT_MESSAGE_NOT_FOUND
         )
 
     # 권한 체크: 해당 메시지가 속한 세션의 user_id가 나인지
@@ -104,12 +104,12 @@ def delete_chat_message(
 
     if session_obj is None:
         raise AppError(
-            ErrorCode.CHAT_MESSAGE_NOT_FOUND
+            error_code=ErrorCode.CHAT_MESSAGE_NOT_FOUND
         )
 
     if session_obj.user_idx != user_idx:
         raise AppError(
-            ErrorCode.CHAT_MESSAGE_FORBIDDEN
+            error_code=ErrorCode.CHAT_MESSAGE_FORBIDDEN
         )
 
     db.delete(msg)

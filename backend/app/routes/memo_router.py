@@ -47,7 +47,7 @@ def post_memo(
         )
     except Exception as e:
         raise AppError(
-            ErrorCode.INTERNAL_SERVER_ERROR,
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
             message=str(e)
         )
 
@@ -103,11 +103,11 @@ def patch_memo(
             updated_at=memo.updated_at,
         )
     except MemoNotFoundError:
-        raise AppError(ErrorCode.MEMO_NOT_FOUND)
+        raise AppError(error_code=ErrorCode.MEMO_NOT_FOUND)
     except ForbiddenMemoAccessError:
-        raise AppError(ErrorCode.FORBIDDEN)
+        raise AppError(error_code=ErrorCode.FORBIDDEN)
     except Exception as e:
-        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR)
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR)
 
 
 @router.delete("/{memo_id}")
@@ -124,8 +124,8 @@ def delete_memo_item(
         )
         return {"success": True}
     except MemoNotFoundError:
-        raise AppError(ErrorCode.MEMO_NOT_FOUND)
+        raise AppError(error_code=ErrorCode.MEMO_NOT_FOUND)
     except ForbiddenMemoAccessError:
-        raise AppError(ErrorCode.MEMO_FORBIDDEN)
+        raise AppError(error_code=ErrorCode.MEMO_FORBIDDEN)
     except Exception as e:
-        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR)
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR)

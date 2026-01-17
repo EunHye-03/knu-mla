@@ -98,25 +98,22 @@ class TermService:
 
         except openai.RateLimitError as e:
             raise AppError(
-                message="Rate limit exceeded when calling OpenAI API.",
                 error_code=ErrorCode.RATE_LIMITED,
-                detail=str(e),
+                message="Rate limit exceeded when calling OpenAI API.",
+                detail={"reason":str(e)}
             )
 
         except (openai.APIConnectionError, openai.APIStatusError) as e:
             raise AppError(
-                message="Upstream error occurred when calling OpenAI API.",
                 error_code=ErrorCode.SERVICE_UNAVAILABLE,
-                status_code=502,
-                detail=str(e),
+                message="Upstream error occurred when calling OpenAI API.",
+                detail={"reason":str(e)}
             )
             
         except Exception as e:
             raise AppError(
-                message="Internal server error.",
                 error_code=ErrorCode.INTERNAL_SERVER_ERROR,
-                status_code=500,
-                detail=str(e),
+                detail={"reason":str(e)}
             )
 
     # ---------- Main Service ----------

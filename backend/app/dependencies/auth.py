@@ -16,27 +16,27 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if credentials is None:
-        raise AppError(ErrorCode.UNAUTHORIZED, message="Not authenticated")
+        raise AppError(error_code=ErrorCode.UNAUTHORIZED, message="Not authenticated")
 
     token = credentials.credentials  # "Bearer <token>"에서 <token> 부분
 
     user_idx = decode_token(token)
     if not user_idx:
         raise AppError(
-            ErrorCode.INVALID_TOKEN,
+            error_code=ErrorCode.INVALID_TOKEN,
             message="invalid token"
         )
 
     user = get_user_by_idx(db, int(user_idx))
     if not user:
         raise AppError(
-            ErrorCode.USER_NOT_FOUND,
+            error_code=ErrorCode.USER_NOT_FOUND,
             message="user not found"
         )
 
     if not user.is_active:
         raise AppError(
-            ErrorCode.ACCOUNT_INACTIVE,
+            error_code=ErrorCode.ACCOUNT_INACTIVE,
             message="user deactivated"
         )
 

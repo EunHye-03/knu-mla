@@ -1,5 +1,5 @@
 import openai
-from app.services.openai_service import call_llm, OpenAIRateLimitError, OpenAIUpstreamError
+from app.services.openai_service import call_llm, OpenAIServiceError
 from app.exceptions.error import AppError, ErrorCode
 
 MAX_TEXT_LENGTH = 500  # 최대 텍스트 길이 제한
@@ -23,15 +23,15 @@ def summarize_text(
     # 빈 텍스트 검증
     if not text:
         raise AppError(
-            message="Input text is empty.",
-            error_code=ErrorCode.INVALID_TEXT        
+            error_code=ErrorCode.INVALID_TEXT,             
+            message="Input text is empty."
         )
 
     # 입력 텍스트 길이 검증
     if len(text) > MAX_TEXT_LENGTH:
         raise AppError(
-            message=f"Text length exceeds the maximum limit of {MAX_TEXT_LENGTH} characters.",
-            error_code=ErrorCode.INPUT_TOO_LONG
+            error_code=ErrorCode.INPUT_TOO_LONG,
+            message=f"Text length exceeds the maximum limit of {MAX_TEXT_LENGTH} characters."
         )
     
     
@@ -62,27 +62,8 @@ def summarize_text(
             max_tokens=512,
         )
     
-    # ---------- OpenAI / 외부 API 에러 ----------
-    except OpenAIRateLimitError as e:  # openai rate limit 예외
-        raise AppError(
-            error_code=ErrorCode.RATE_LIMITED,
-            message="Too many requests. Please try again later.",
-            status_code=429,
-            detail=str(e),
-        )
-
-    except OpenAIUpstreamError as e:
-        # 네트워크/타임아웃 등 연결 문제 → 외부(API) 문제로 보는 게 보통 깔끔
-        raise AppError(
-            error_code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Failed to generate summary.",
-            detail=str(e)
-        )
-
-    except Exception as e:
-        # 나머지 = 서버 내부 로직 문제로 500
-        raise AppError(
-            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
-            message="Internal server error.",
-            detail=str(e)
-        )
+    except OpenAIServiceError as e:
+        # e.error_code: RATE_LIMITED / UPSTREAM_ERROR / OPENAI_ERROR / INTERNAL_ERROR
+        if e.error_code == "RATE_LIMITED":
+            raise AppError(error_code=ErrorCode.RATE_LIMITED, message=str(e))
+        raise AppError(error_code=ErrorCode.SERVICE_UNAVAILABLE, message=str(e))

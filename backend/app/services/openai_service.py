@@ -1,4 +1,5 @@
 import os, openai, logging
+from typing import Optional
 from openai import OpenAI
 
 logger = logging.getLogger("app")
@@ -59,7 +60,7 @@ def call_llm(
   model: str = "gpt-4o-mini",
   temperature: float = 0.3,
   max_tokens: int = 512,
-  request_id: str
+  request_id: Optional[str] = None,
 ) -> str:
   client = get_openai_client()
     

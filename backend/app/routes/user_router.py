@@ -48,7 +48,7 @@ def update_info(
         )
     except AppError:
         raise
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
         logger.exception("database error", extra={"reason": str(e)})
         raise AppError(error_code=ErrorCode.DB_ERROR)
 
@@ -99,4 +99,4 @@ def withdraw_me(
         raise AppError(error_code=ErrorCode.DB_ERROR)
 
     except Exception as e:
-        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR, detail=str(e))
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, detail={"reason":str(e)})

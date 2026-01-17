@@ -11,4 +11,4 @@ class ErrorResponse(BaseModel):
     request_id: str
     error_code: ErrorCode
     message: str
-    details: Optional[dict[str, Any]] = None
+    detail: Optional[dict[str, Any]] = None

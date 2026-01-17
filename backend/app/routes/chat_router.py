@@ -64,7 +64,7 @@ def create_session(
         return session
     except ValueError as e:
         log.warning("chat.create_session.invalid_request", extra={"reason": str(e)})
-        raise AppError(ErrorCode.INVALID_REQUEST, message=str(e))
+        raise AppError(error_code=ErrorCode.INVALID_REQUEST, message=str(e))
 
 
 # 채팅 세션 목록 (user_idx 필수, project_id 옵션)
@@ -131,11 +131,11 @@ def get_session_messages(
     session = get_chat_session(db, chat_session_id)
     if not session:
         log.warning("chat.list_messages.not_found", extra={"chat_session_id": chat_session_id})
-        raise AppError(ErrorCode.CHAT_MESSAGE_NOT_FOUND, message="Chat session not found")
+        raise AppError(error_code=ErrorCode.CHAT_MESSAGE_NOT_FOUND, message="Chat session not found")
 
     if session.user_idx != current_user.user_idx:
         log.warning("chat.list_messages.forbidden", extra={"chat_session_id": chat_session_id})
-        raise AppError(ErrorCode.FORBIDDEN, message="Forbidden")
+        raise AppError(error_code=ErrorCode.FORBIDDEN, message="Forbidden")
 
     messages = list_messages(db, chat_session_id=chat_session_id, limit=limit, offset=offset)
     log.info("chat.list_messages.ok", extra={"count": len(messages)})
@@ -161,7 +161,7 @@ def post_message(
 
         if session is not None and session.user_idx != current_user.user_idx:
             log.warning("chat.create_message.forbidden", extra={"chat_session_id": chat_session_id})
-            raise AppError(ErrorCode.FORBIDDEN, message="Forbidden")
+            raise AppError(error_code=ErrorCode.FORBIDDEN, message="Forbidden")
         
     # 3) 없으면 생성
     if session is None:
@@ -176,7 +176,7 @@ def post_message(
             log.info("chat.create_message.session_created", extra={"chat_session_id": session.chat_session_id})
         except ValueError as e:
             log.warning("chat.create_message.invalid_request", extra={"reason": str(e)})
-            raise AppError(ErrorCode.INVALID_REQUEST, message=str(e))
+            raise AppError(error_code=ErrorCode.INVALID_REQUEST, message=str(e))
 
     data.chat_session_id = session.chat_session_id
 
@@ -290,7 +290,7 @@ def search_sessions(
         )
     except ValueError as e:
         log.warning("chat.search_sessions.invalid_request", extra={"reason": str(e)})
-        raise AppError(ErrorCode.INVALID_REQUEST, message=str(e))
+        raise AppError(error_code=ErrorCode.INVALID_REQUEST, message=str(e))
 
     items = [
         ChatSessionListItem(

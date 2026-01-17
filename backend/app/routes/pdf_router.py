@@ -6,19 +6,21 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user
+from app.models.users import User
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.summarize_service import summarize_text
 from app.services.translate_service import translate_text
 from app.services.chat_log_service import save_chat_messages
 from app.exceptions.error import AppError, ErrorCode
 
-router = APIRouter(prefix="", tags=["PDF"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="", tags=["PDF"])
 
 @router.post("/summarize/pdf")
 def summarize_pdf(
     file: UploadFile = File(...),
     chat_session_id: int | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     request_id = str(uuid.uuid4())
 
@@ -28,6 +30,7 @@ def summarize_pdf(
 
         save_chat_messages(
             db=db,
+            user_idx=current_user.user_idx,
             chat_session_id=chat_session_id,
             feature_type="pdf_summarize",
             user_content=f"[pdf] {file.filename}",
@@ -42,7 +45,7 @@ def summarize_pdf(
         }
       
     except Exception as e:
-        raise AppError(status_code=500, detail=str(e))
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, detail={"reason": str(e)})
 
 
 @router.post("/translate/pdf")
@@ -52,6 +55,7 @@ def translate_pdf(
     source_lang: Optional[str] = Form(None),
     chat_session_id: int | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     request_id = str(uuid.uuid4())
 
@@ -65,6 +69,7 @@ def translate_pdf(
 
         save_chat_messages(
             db=db,
+            user_idx=current_user.user_idx,
             chat_session_id=chat_session_id,
             feature_type="pdf_translate",
             user_content=f"[pdf] {file.filename}",
@@ -82,4 +87,4 @@ def translate_pdf(
         }
         
     except Exception as e:
-        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR)
+        raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR)

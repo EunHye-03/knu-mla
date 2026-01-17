@@ -153,12 +153,12 @@ class AppError(Exception):
         *,
         error_code: ErrorCode,
         message: str | None = None,
-        details: Optional[dict[str, Any]] = None,
+        detail: Optional[dict[str, Any]] = None,
     ) -> None:
         super().__init__(message)
         self.error_code = error_code
         self.message = message
-        self.details = dict(details) if details else {}
+        self.detail = dict(detail) if detail else {}
         
     @property
     def status_code(self) -> int:
