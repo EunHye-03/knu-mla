@@ -1,89 +1,125 @@
+from __future__ import annotations
+
+import json
+from typing import Optional
+
 import openai
 
 from app.services.openai_service import call_llm
 from app.exceptions.error import AppError, ErrorCode
+from app.models.enums import Lang
 
-MAX_TEXT_LENGTH = 1000  # 최대 텍스트 길이 제한
-SUPPORTED_LANGUAGES = {"en", "ko", "uz"}  # 지원되는 언어 코드 집합
+MAX_TEXT_LENGTH = 1000
+
+def _to_lang_enum_or_none(v: Optional[str | Lang]) -> Optional[Lang]:
+    """
+    입력이 Lang이면 그대로, 문자열이면 Lang(...)로 변환.
+    None이면 None.
+    잘못된 문자열이면 ValueError 발생.
+    """
+    if v is None:
+        return None
+    if isinstance(v, Lang):
+        return v
+    return Lang(str(v))
 
 
 def translate_text(
   *,
   text: str,
-  source_lang: str,
+  source_lang: Optional[str | Lang] = None,
   target_lang: str,
 ) -> str:
-    """
-    주어진 텍스트를 지정된 언어로 번역하는 함수
-
-    Args:
-        text (str): 번역할 원본 텍스트
-        source_lang (str): 원본 텍스트의 언어 코드 (예: "en", "ko")
-        target_lang (str): 번역할 대상 언어 코드 (예: "en", "ko")
-
-    Returns:
-        str: 번역된 텍스트
-    """
-    # --------------- 입력 검증 -----------------
-    # 빈 텍스트 검증
+    # ------- 입력 검증 ------
     if not text or not text.strip():
         raise AppError(
             message="Input text is empty.",
-            error_code=ErrorCode.EMPTY_INPUT,
-            status_code=400,
+            error_code=ErrorCode.INVALID_INPUT,
+            status_code=422,
         )
-
-    # 입력 텍스트 길이 검증
+    
     if len(text) > MAX_TEXT_LENGTH:
         raise AppError(
-            message=f"Text length exceeds the maximum limit of {MAX_TEXT_LENGTH} characters.",
-            error_code=ErrorCode.TEXT_TOO_LONG,
-            status_code=413,
+            message=f"Input text is too long. Max {MAX_TEXT_LENGTH} chars.",
+            error_code=ErrorCode.INVALID_INPUT,
+            status_code=422,
         )
-
-    # 언어 코드 검증
-    if source_lang not in SUPPORTED_LANGUAGES:
+        
+    try:
+        src_enum = _to_lang_enum_or_none(source_lang)  # Lang | None
+        tgt_enum = _to_lang_enum_or_none(target_lang)  # Lang
+        if tgt_enum is None:
+            raise ValueError("target_lang is required.")
+    except ValueError:
         raise AppError(
-            message=f"Unsupported source language: {source_lang}",
-            error_code=ErrorCode.UNSUPPORTED_LANG,
-            status_code=400,
+            message="lang must be one of: ko, en, uz",
+            error_code=ErrorCode.INVALID_INPUT,
+            status_code=422,
         )
-
-    if target_lang not in SUPPORTED_LANGUAGES:
-        raise AppError(
-            message=f"Unsupported target language: {target_lang}",
-            error_code=ErrorCode.UNSUPPORTED_LANG,
-            status_code=400,
-        )
-
-    system_prompt = (
-        "You are a friendly assistant for university students."
+        
+    src_line = (
+        f"Source language: {src_enum.value}"
+        if src_enum is not None
+        else "Source language: auto-detect"
     )
     
-    # --------------- 번역 프롬프트 구성 -----------------
-    user_prompt = (
-        f"The following term is written in {source_lang or 'an unknown language'}.\n\n"
-        f"Please do the following:\n"
-        f"1. Translate the term into {target_lang}.\n"
-        f"2. Explain its meaning clearly and kindly for a university student.\n\n"
-        f"Rules:\n"
-        f"- First line: ONLY the translated term.\n"
-        f"- Leave one blank line.\n"
-        f"- Below that, keep the explanation concise (2–3 sentences).\n"
-        f"- Do NOT add labels like 'Term', 'Translation', or 'Explanation'.\n"
-        f"- Do NOT include pronunciation or romanization.\n"
-        f"- Use clear and natural language, but avoid overly casual expressions.\n"
+    # -------- 프롬프트 -------
+    system_prompt = "\n".join([
+        "You are a professional translation engine."
+        "Your job: detect the input language, then translate accurately and naturally."
+        "Return JSON only. No markdown. No code fences. No extra text."
+        "Language codes must be one of: ko, en, uz."
+    ])
+    
+    user_prompt = "\n".join([
+        f"{src_line}"
+        f"Target language: {tgt_enum.value}"
+        ""
+        "Text to translate:"
+        
+        "Output format (JSON only):"
+            '{"detected_lang":"<language_code>","translated_text":"<translated_text>"}'
         f"{text}"
-        )
+    ])
     
     try:
-        return call_llm(
+        llm_result  = call_llm(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             model="gpt-4o-mini",
             temperature=0.3,
             max_tokens=512,
         )
+        
+        parsed = json.loads(llm_result.strip())
+        
+        llm_detected = parsed.get("detected_lang")
+        translated_text = parsed.get("translated_text")
+
+        if not translated_text or not isinstance(translated_text, str):
+            raise ValueError("LLM response missing translated_text.")
+
+        detected_lang = src_enum.value if src_enum is not None else llm_detected
+
+        if detected_lang is not None:
+            try:
+                detected_lang = Lang(detected_lang).value
+            except ValueError:
+                detected_lang = None
+
+        return {
+            "detected_lang": detected_lang,
+            "translated_text": translated_text,
+        }
+
+    except json.JSONDecodeError as e:
+        raise AppError(
+            message="Failed to parse LLM response as JSON.",
+            error_code=ErrorCode.UPSTREAM_ERROR,
+            status_code=502,
+            detail=str(e),
+        )
+
     
     except openai.RateLimitError as e:
         raise AppError(

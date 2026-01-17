@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.session import Base
+from app.db.base_class import Base
 
 class TermExplanation(Base):
     __tablename__ = "term_explanation"
@@ -11,8 +11,6 @@ class TermExplanation(Base):
         primary_key=True, 
         nullable=False
     )
-    term_name = Column(String(255), primary_key=True, nullable=False)
-    term_lang = Column(String(2), primary_key=True, nullable=False)
     explanation = Column(Text, nullable=False)
 
     # 관계: term_explanation (N) -> term (1)

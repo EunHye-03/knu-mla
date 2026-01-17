@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 
@@ -18,9 +18,6 @@ SessionLocal = sessionmaker(  # 실제 DB와 통신하는 세션 생성기
     autoflush=False, # 변경사항 자동 플러시(임시 반영) 비활성화
 )
 
-class Base(DeclarativeBase):  # ORM 모델들이 상속받는 부모 클래스
-    pass
-  
 def get_db():
     db = SessionLocal()
     try:

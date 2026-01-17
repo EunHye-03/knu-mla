@@ -1,74 +1,93 @@
-import uuid
-from typing import Optional
-
-import openai
+import uuid, openai
+from typing import Optional, Any
 from sqlalchemy.orm import Session
 
 from app.models.term import Term
 from app.models.term_explanation import TermExplanation
 from app.schemas.term import TermExplainData, TermExplainRequest, TermExplainResponse
 
+from app.models.enums import Source
+
 from app.services.openai_service import call_llm
 from app.services.translate_service import translate_text
 from app.exceptions.error import AppError, ErrorCode
 
-
 class TermService:
+    # ---------- translate_text/call_llm -> str or dict -> 문자열만 반환 ----------
+    
+    def _to_text(self, x: Any) -> str:
+        if isinstance(x, str):
+            return x.strip()
+
+        if isinstance(x, dict):
+            for key in ("translated_text", "text", "result", "content", "message"):
+                v = x.get(key)
+                if isinstance(v, str):
+                    return v.strip()
+            return str(x).strip()
+
+        return str(x).strip()
 
     # ---------- DB 조회 ----------
 
-    def find_explanation(
-        self, db: Session, term_id: int, target_lang: str
-    ) -> Optional[TermExplanation]:
-        return (
-            db.query(TermExplanation)
-            .filter(
-                TermExplanation.term_id == term_id,
-                TermExplanation.term_lang == target_lang,
-            )
-            .first()
-        )
+    def find_term_by_name(self, db: Session, term_name: str) -> Term | None:
+        return db.query(Term).filter(Term.term_name == term_name).first()
+
+    def create_term(self, db: Session, term_name: str) -> Term:
+        term = Term(term_name=term_name)
+        db.add(term)
+        db.commit()
+        db.refresh(term)
+        return term
+
+    def find_explanation(self, db: Session, term_id: int) -> TermExplanation | None:
+        return db.query(TermExplanation).filter(TermExplanation.term_id == term_id).first()
+
+    def upsert_explanation(self, db: Session, term_id: int, explanation: str) -> TermExplanation:
+        row = db.query(TermExplanation).filter(TermExplanation.term_id == term_id).first()
+        if row:
+            row.explanation = explanation
+        else:
+            row = TermExplanation(term_id=term_id, explanation=explanation)
+            db.add(row)
+
+        db.commit()
+        db.refresh(row)
+        return row
 
     # ---------- LLM ----------
 
     def explain_by_llm(
         self,
         term_text: str,
-        target_lang: str,
         context: Optional[str],
     ) -> str:
-        system_prompt = (
-            "You are a helpful assistant designed for university students. "
-            "You provide accurate, concise, and neutral explanations of academic "
-            "and campus-related terms. "
-            "You strictly follow formatting instructions."
-        )
-
-        user_prompt = (
-            "You are helping an international student at Kyungpook National University (KNU).\n"
-            "The term below appears in Korean university life (course registration, grades, notices, student community).\n\n"
-            f"Term:\n{term_text}\n\n"
-            f"Context:\n{context or 'Not provided'}\n\n"
-            "Tasks:\n"
-            f"1) Translate the term into {target_lang}.\n"
-            "2) Explain what it means in a Korean university setting (especially KNU-style academic/campus context).\n"
-            "   - If the term is slang/abbreviation used by students, explain that.\n"
-            "   - If the term relates to course registration, graduation requirements, grades, or major requirements, reflect that.\n"
-            "   - If the meaning is uncertain, give the most likely interpretation and keep confidence modest.\n\n"
-            "Output format (follow exactly):\n"
-            "Line 1: ONLY the translated term.\n"
-            "Line 2: (blank)\n"
-            "Lines 3-5: Explanation in 2–3 complete sentences in a clear, neutral tone.\n"
-            f"Line 6: (blank)\n"
-            f"Lines 7-9: The same explanation translated into {target_lang} (2–3 sentences).\n\n"
-            "Constraints:\n"
-            "- Do NOT add labels or headings (no 'Translation:', 'Explanation:', etc.).\n"
-            "- Do NOT include pronunciation/romanization.\n"
-            "- Do NOT invent specific KNU-only facts (numbers, official policies) unless you are sure.\n"
-            "- Keep it helpful for a university student.\n"
-        )
-
         try:
+            system_prompt = "\n".join([
+                "You are a reliable assistant for Korean university students and international students.",
+                "Explain Korean university terms accurately and concisely.",
+                "You MUST follow the output rules exactly.",
+            ])
+
+            user_prompt = "\n".join([
+                "Task:",
+                "Explain the meaning of the given Korean university term in Korean.",
+                "",
+                f"Term: {term_text}",
+                f"Context: {context or ''}",
+                "",
+                "Output rules (MUST follow exactly):",
+                "- Output Korean only.",
+                "- Output ONLY the explanation text.",
+                "- Exactly 2 sentences.",
+                "- No quotes, no code blocks, no JSON, no labels, no headings.",
+                "- No line breaks (single line).",
+                "- Do NOT repeat the term itself in the explanation.",
+                "- Do NOT mention specific universities unless the context explicitly mentions them.",
+                "",
+                "Now write the explanation:",
+            ])
+
             return call_llm(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
@@ -84,7 +103,7 @@ class TermService:
                 status_code=429,
                 detail=str(e),
             )
-        
+
         except (openai.APIConnectionError, openai.APIStatusError) as e:
             raise AppError(
                 message="Upstream error occurred when calling OpenAI API.",
@@ -108,65 +127,60 @@ class TermService:
         db: Session,
         request: TermExplainRequest,
     ) -> TermExplainResponse:
-        
+
         request_id = str(uuid.uuid4())
 
-        # --------------- 입력 검증 ---------------
-        if not request.term or request.term.strip() == "":
-            raise AppError(
-                message="The 'term' field must not be empty.",
-                error_code=ErrorCode.INVALID_INPUT,
-                status_code=400,
+        term_row = self.find_term_by_name(db, request.term)
+        if not term_row:
+            term_row = self.create_term(db, request.term)
+
+        explanation_row = self.find_explanation(db, term_row.term_id)
+
+        if explanation_row:
+            explanation_text = explanation_row.explanation
+            source = Source.db
+        else:
+            # db에 없으면 LLM로 ko 설명 생성 후 db 저장
+            explanation_text = self.explain_by_llm(
+                term_text=request.term,
+                context=request.context,
+            ).strip()
+
+            self.upsert_explanation(db, term_row.term_id, explanation_text)
+            source = Source.ai_guess
+        
+        target_lang = getattr(request.target_lang, "value", request.target_lang)
+        
+        # 응답용, DB 저장 안 함
+        translated_term_raw = translate_text(
+            text=request.term,
+            source_lang="ko",
+            target_lang=target_lang,
+        )
+
+        if target_lang == "ko":
+            translated_explanation_raw = explanation_text
+        else:
+            translated_explanation_raw = translate_text(
+                text=explanation_text,
+                source_lang="ko",
+                target_lang=target_lang,
             )
         
-        # DB에서 term 조회 (이름 기준)
-        term_row = (
-            db.query(Term)
-            .filter(Term.term_name == request.term)
-            .first()
-        )
-
-        # DB에 term 존재
-        if term_row:
-            explanation_row = self.find_explanation(
-                db, term_row.term_id, request.target_lang
-            )
-            # DB에 term 설명 존재
-            if explanation_row:
-                return TermExplainResponse(
-                    request_id=request_id,
-                    success=True,
-                    data=TermExplainData(
-                        term=request.term,
-                        source="db",
-                        explanation=explanation_row.explanation,
-                        translated_explanation=translate_text(
-                            explanation_row.explanation,
-                            source_lang=None,
-                            target_lang=request.target_lang),
-                    ),
-                )
-
-        # DB에 term 자체가 없음 → AI 추정
-        explanation_text = self.explain_by_llm(
-            term_text=request.term,
-            target_lang=request.target_lang,
-            context=request.context,
-        )
-
+        translated_term = self._to_text(translated_term_raw)
+        translated_explanation = self._to_text(translated_explanation_raw)
+        
         return TermExplainResponse(
             request_id=request_id,
             success=True,
             data=TermExplainData(
                 term=request.term,
-                source="ai_guess",
+                source=source,
+                translated_term=translated_term,
                 explanation=explanation_text,
-                translated_explanation=translate_text(
-                    text=explanation_text,
-                    source_lang=None,
-                    target_lang=request.target_lang,
-                ),
+                translated_explanation=translated_explanation,
             ),
         )
+
 
 term_service = TermService()
