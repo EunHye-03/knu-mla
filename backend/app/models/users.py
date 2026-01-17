@@ -35,7 +35,7 @@ class User(Base):
     is_dark_mode: Mapped[bool] = mapped_column(
         Boolean,
         nullable = False,
-        server_default=text("fault"),
+        server_default=text("false"),
     )
     
     created_at: Mapped[DateTime] = mapped_column(
