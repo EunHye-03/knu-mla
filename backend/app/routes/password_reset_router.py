@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from urllib.parse import urlencode
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -71,7 +71,7 @@ def forgot_password(
 
 @router.post("/reset")
 def reset_password(
-    request: Request,
+    req_http: Request,
     req: PasswordResetConfirm,
     db: Session = Depends(get_db),
 ):
