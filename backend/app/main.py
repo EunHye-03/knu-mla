@@ -6,7 +6,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.request_id import RequestIdMiddleware
 from app.core.request_logging import RequestLoggingMiddleware
 from app.exceptions.handlers import register_exception_handlers
 from app.db.session import engine
@@ -20,7 +19,6 @@ def create_app() -> FastAPI:
     def on_startup():
         Base.metadata.create_all(bind=engine)
     
-    app.add_middleware(RequestIdMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     
     register_exception_handlers(app)

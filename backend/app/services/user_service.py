@@ -112,7 +112,7 @@ def update_user_me(
 
 def change_password(db: Session, *, user: User, current_password: str, new_password: str) -> None:
     if not verify_password(current_password, user.password_hash):
-        raise AppError(error_code=ErrorCode.INVALID_CREDENTIALS, detail="INVALID_PASSWORD")
+        raise AppError(error_code=ErrorCode.INVALID_CREDENTIALS, detail={"reason": "INVALID_PASSWORD"})
 
     # 같은 비번으로 변경 방지
     if verify_password(new_password, user.password_hash):
