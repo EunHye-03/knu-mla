@@ -71,7 +71,9 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2 group">
-                            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.password_label}</label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.password_label}</label>
+                            </div>
                             <Input
                                 type="password"
                                 placeholder="••••••••"
@@ -80,6 +82,14 @@ export default function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
+                            <div className="flex justify-end">
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-xs text-red-600 hover:text-red-700 hover:underline font-medium"
+                                >
+                                    {t.forgot_password}
+                                </Link>
+                            </div>
                         </div>
                         <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
                             {t.login_button} <ArrowRight className="ml-2 h-4 w-4" />

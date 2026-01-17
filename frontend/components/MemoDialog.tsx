@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { X, StickyNote, Save } from "lucide-react"
+import { X, StickyNote, Save, Trash2, Pencil } from "lucide-react"
 import { useLanguage } from "@/components/layout/language-context"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -27,6 +27,22 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
         localStorage.setItem("knu_mla_memo", note)
         onClose()
     }
+
+    const handleEdit = () => {
+        // For now, edit just saves the current note (could open an edit modal later)
+        localStorage.setItem("knu_mla_memo", note)
+        onClose()
+    }
+
+    const handleDelete = () => {
+        localStorage.removeItem("knu_mla_memo")
+        setNote("")
+        onClose()
+    }
+
+
+
+
 
     if (!open) return null
 
@@ -54,13 +70,28 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
                         autoFocus
                     />
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-end pt-4 space-x-2">
                         <Button
                             className="bg-amber-500 hover:bg-amber-600 text-white border-none shadow-amber-200 dark:shadow-none"
                             onClick={handleSave}
                         >
                             <Save className="h-4 w-4 mr-2" />
                             {t.save_memo}
+                        </Button>
+                        <Button
+                            className="bg-amber-400 hover:bg-amber-500 text-white border-none"
+                            onClick={handleEdit}
+                        >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            className="bg-red-500 hover:bg-red-600 text-white border-none"
+                            onClick={handleDelete}
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
                         </Button>
                     </div>
                 </div>

@@ -16,11 +16,23 @@ export default function RegisterPage() {
     const [name, setName] = React.useState("")
     const [id, setId] = React.useState("")
     const [password, setPassword] = React.useState("")
+    const [email, setEmail] = React.useState("")
+    const [isLoading, setIsLoading] = React.useState(false)
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (name && id && password) {
-            register(name, id, password)
+        if (name && id && password && email) {
+            if (!email.includes("@")) { // Basic validation
+                alert(t.signup_email_required || "Invalid email")
+                return
+            }
+            if (password.length < 6) {
+                alert("Password must be at least 6 characters")
+                return
+            }
+            setIsLoading(true)
+            await register(name, id, password, email)
+            setIsLoading(false)
         }
     }
 
@@ -55,6 +67,18 @@ export default function RegisterPage() {
                                 required
                             />
                         </div>
+
+                        <div className="space-y-2 group">
+                            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.email_label}</label>
+                            <Input
+                                type="email"
+                                placeholder={t.email_placeholder}
+                                className="bg-zinc-50/50 border-zinc-200 focus:border-red-500 focus:ring-red-500/20 dark:bg-zinc-900/50 dark:border-zinc-800 transition-all duration-300"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
                         <div className="space-y-2 group">
                             <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.login_id_label}</label>
                             <Input
@@ -77,8 +101,8 @@ export default function RegisterPage() {
                                 required
                             />
                         </div>
-                        <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
-                            {t.register_button} <ArrowRight className="ml-2 h-4 w-4" />
+                        <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
+                            {isLoading ? "Loading..." : t.register_button} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </CardContent>
                 </form>
@@ -91,6 +115,6 @@ export default function RegisterPage() {
                     </div>
                 </CardFooter>
             </Card>
-        </div>
+        </div >
     )
 }

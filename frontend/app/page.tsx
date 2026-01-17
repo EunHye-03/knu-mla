@@ -19,7 +19,56 @@ export default function Home() {
   const { t, language } = useLanguage()
   const [messages, setMessages] = React.useState<Message[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
-  const [chatHistory, setChatHistory] = React.useState<{ id: number, title: string }[]>([])
+  const [chatHistory, setChatHistory] = React.useState<{ id: number, title: string, pinned?: boolean, projectId?: string | number }[]>([])
+
+  const handleNewChat = () => {
+    setMessages([])
+    setIsLoading(false)
+  }
+
+  // Load history from local storage on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem("knu_mla_chat_history")
+    if (saved) {
+      try {
+        setChatHistory(JSON.parse(saved))
+      } catch (e) {
+        console.error("Failed to parse chat history", e)
+      }
+    }
+  }, [])
+
+  // Save history to local storage whenever it changes
+  React.useEffect(() => {
+    if (chatHistory.length > 0) {
+      localStorage.setItem("knu_mla_chat_history", JSON.stringify(chatHistory))
+    }
+  }, [chatHistory])
+
+  // Advanced Chat Handlers
+  const handlePinChat = (id: number) => {
+    setChatHistory(prev => prev.map(chat =>
+      chat.id === id ? { ...chat, pinned: !chat.pinned } : chat
+    ))
+  }
+
+  const handleDeleteChat = (id: number) => {
+    if (confirm("Are you sure you want to delete this chat?")) {
+      setChatHistory(prev => prev.filter(chat => chat.id !== id))
+    }
+  }
+
+  const handleRenameChat = (id: number, newTitle: string) => {
+    setChatHistory(prev => prev.map(chat =>
+      chat.id === id ? { ...chat, title: newTitle } : chat
+    ))
+  }
+
+  const handleMoveChat = (id: number, projectId: string | number) => {
+    setChatHistory(prev => prev.map(chat =>
+      chat.id === id ? { ...chat, projectId } : chat
+    ))
+  }
 
   const handleSend = async (text: string, mode: string, options?: { targetLang?: string }) => {
     // Determine if it's a feedback action or a real message
@@ -53,10 +102,12 @@ export default function Home() {
 
     // If this is the first message, add to history
     if (messages.length === 0) {
-      setChatHistory(prev => [{
+      const newHistoryItem = {
         id: Date.now(),
-        title: text.length > 30 ? text.substring(0, 30) + "..." : text
-      }, ...prev])
+        title: text.length > 30 ? text.substring(0, 30) + "..." : text,
+        pinned: false
+      }
+      setChatHistory(prev => [newHistoryItem, ...prev])
     }
 
     setMessages((prev) => [...prev, userMsg])
@@ -89,8 +140,15 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background font-sans transition-colors duration-300">
-      <Sidebar />
+    <div className="flex min-h-screen w-full bg-transparent font-sans transition-colors duration-300">
+      <Sidebar
+        history={chatHistory}
+        onNewChat={handleNewChat}
+        onPinChat={handlePinChat}
+        onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
+        onMoveChat={handleMoveChat}
+      />
 
       <div className="flex flex-1 flex-col h-screen overflow-hidden">
         <Header />
@@ -101,7 +159,7 @@ export default function Home() {
               <div className="flex flex-1 flex-col items-center justify-center text-center space-y-8 py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full bg-red-100 blur-2xl dark:bg-red-900/20 animate-pulse" />
-                  <div className="relative rounded-2xl bg-gradient-to-tr from-red-50 to-white p-6 shadow-xl ring-1 ring-black/5 dark:from-zinc-900 dark:to-zinc-800 dark:ring-white/10">
+                  <div className="relative rounded-2xl bg-gradient-to-tr from-red-50 to-white/80 p-6 shadow-xl ring-1 ring-black/5 dark:from-zinc-900/80 dark:to-zinc-800/80 dark:ring-white/10 backdrop-blur-sm">
                     <div className="text-5xl">👋</div>
                   </div>
                 </div>
@@ -133,7 +191,7 @@ export default function Home() {
                 {isLoading && (
                   <div className="flex w-full justify-center mb-6">
                     {/* Floating 3D Loading Frame */}
-                    <div className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl shadow-red-100/50 dark:shadow-red-900/10 border border-zinc-100 dark:border-zinc-700 animate-in fade-in zoom-in duration-300">
+                    <div className="flex items-center gap-3 px-6 py-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-2xl shadow-xl shadow-red-100/50 dark:shadow-red-900/10 border border-zinc-100 dark:border-zinc-700 animate-in fade-in zoom-in duration-300">
                       <div className="flex space-x-1">
                         <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce [animation-delay:-0.3s]"></div>
                         <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce [animation-delay:-0.15s]"></div>
@@ -148,7 +206,7 @@ export default function Home() {
           </div>
         </main>
 
-        <div className="w-full bg-background p-4 md:px-6 md:pb-6">
+        <div className="w-full bg-transparent p-4 md:px-6 md:pb-6">
           <div className="mx-auto max-w-3xl">
             <ChatInput onSend={handleSend} isLoading={isLoading} />
             <div className="mt-2 text-center text-xs text-muted-foreground">

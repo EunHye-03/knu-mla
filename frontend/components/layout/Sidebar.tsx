@@ -7,12 +7,32 @@ import {
     MessageSquare,
     User,
     Settings2,
-    MoreHorizontal,
     Search,
     FolderPlus,
     Briefcase,
-    StickyNote
+    StickyNote,
+    Edit2,
+    Share2,
+    MoreHorizontal,
+    Pin,
+    Folder,
+    Trash,
+    Trash2
 } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent
+} from "@/components/ui/DropdownMenu"
+import { api } from "@/services/api"
+import { Input } from "@/components/ui/Input"
+import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
 import { SettingsDialog } from "@/components/SettingsDialog"
@@ -23,20 +43,73 @@ import { MemoDialog } from "@/components/MemoDialog"
 
 // Sidebar Props
 interface SidebarProps {
-    history?: { id: number, title: string }[]
+    history?: { id: number, title: string, pinned?: boolean, projectId?: string | number }[]
+    onNewChat?: () => void
+    onPinChat?: (id: number) => void
+    onDeleteChat?: (id: number) => void
+    onRenameChat?: (id: number, newTitle: string) => void
+    onMoveChat?: (id: number, projectId: string | number) => void
 }
 
-export function Sidebar({ history = [] }: SidebarProps) {
+export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRenameChat, onMoveChat }: SidebarProps) {
     const { user, logout } = useAuth()
+    // ... existing hook calls ...
+
+
     const { t } = useLanguage()
     const [settingsOpen, setSettingsOpen] = React.useState(false)
     const [projectDialogOpen, setProjectDialogOpen] = React.useState(false)
     const [memoOpen, setMemoOpen] = React.useState(false)
     const [isSearchOpen, setIsSearchOpen] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState("")
-    const [projects, setProjects] = React.useState<{ id: number, title: string, color: string }[]>([])
+    const [projects, setProjects] = React.useState<{ id: number, name: string, description: string, category: string, color?: string }[]>([])
+    const [expandedProjects, setExpandedProjects] = React.useState<Set<number>>(new Set())
 
-    const handleCreateProject = (project: { title: string, category: string }) => {
+    const toggleProject = (e: React.MouseEvent, id: number) => {
+        e.stopPropagation()
+        const newExpanded = new Set(expandedProjects)
+        if (newExpanded.has(id)) {
+            newExpanded.delete(id)
+        } else {
+            newExpanded.add(id)
+        }
+        setExpandedProjects(newExpanded)
+    }
+
+    // Filter history for "Unsorted" (not in a project) main list
+    const filteredHistory = history.filter(chat =>
+        // Must match search query AND (not be in a project OR allow searching everything when searching)
+        chat.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        (!chat.projectId || searchQuery !== "") // Show all if searching, otherwise only unassigned
+    )
+
+    // Edit State
+    const [editingProject, setEditingProject] = React.useState<{ id: number, name: string, description: string } | null>(null)
+    const [editName, setEditName] = React.useState("")
+    const [editDesc, setEditDesc] = React.useState("")
+
+    // Load projects on mount
+    React.useEffect(() => {
+        loadProjects()
+    }, [])
+
+    const loadProjects = async () => {
+        try {
+            const data = await api.getProjects().catch(() => [])
+            if (!data || data.length === 0) {
+                const local = localStorage.getItem("knu_mla_projects")
+                if (local) {
+                    setProjects(JSON.parse(local))
+                }
+            } else {
+                setProjects(data)
+            }
+        } catch (e) {
+            console.error("Failed to load projects", e)
+        }
+    }
+
+    const handleCreateProject = async (project: { title: string, category: string }) => {
         const colors: Record<string, string> = {
             homework: "text-blue-500",
             research: "text-purple-500",
@@ -46,19 +119,85 @@ export function Sidebar({ history = [] }: SidebarProps) {
             default: "text-gray-500"
         }
 
-        const newProject = {
-            id: Date.now(),
-            title: project.title,
-            color: colors[project.category] || colors.default
-        }
+        try {
+            const res = await api.createProject({ name: project.title, category: project.category })
 
-        setProjects([...projects, newProject])
+            // Add to local state & storage for persistence (Mock Mode)
+            const newProject = {
+                id: res.id || Date.now(),
+                name: project.title,
+                description: "",
+                category: project.category,
+                color: colors[project.category] || colors.default
+            }
+
+            const updated = [...projects, newProject]
+            setProjects(updated)
+            localStorage.setItem("knu_mla_projects", JSON.stringify(updated))
+
+        } catch (e) {
+            // Fallback for demo if API fails completely
+            const newProject = {
+                id: Date.now(),
+                name: project.title,
+                description: "",
+                category: project.category,
+                color: colors[project.category] || colors.default
+            }
+            const updated = [...projects, newProject]
+            setProjects(updated)
+            localStorage.setItem("knu_mla_projects", JSON.stringify(updated))
+        }
+    }
+
+    const handleDeleteProject = async (e: React.MouseEvent, id: number) => {
+        e.stopPropagation() // Prevent navigation
+        if (confirm(t.confirm_delete_project || "Are you sure you want to delete this project?")) {
+            try {
+                await api.deleteProject(id)
+            } catch (e) {
+                console.error("API delete failed, removing locally", e)
+            } finally {
+                // Always remove locally for better UX in mock mode
+                const updated = projects.filter(p => p.id !== id)
+                setProjects(updated)
+                localStorage.setItem("knu_mla_projects", JSON.stringify(updated))
+            }
+        }
+    }
+
+    const handleUpdateProject = async () => {
+        if (!editingProject) return
+        try {
+            await api.updateProject(editingProject.id.toString(), { name: editName, description: editDesc })
+        } catch (e) {
+            console.error("API update failed, updating locally", e)
+        } finally {
+            // Always update locally
+            const updated = projects.map(p => p.id === editingProject.id ? { ...p, name: editName, description: editDesc } : p)
+            setProjects(updated)
+            localStorage.setItem("knu_mla_projects", JSON.stringify(updated))
+            setEditingProject(null)
+        }
+    }
+
+    const openEditModal = (e: React.MouseEvent, project: any) => {
+        e.stopPropagation()
+        setEditingProject(project)
+        setEditName(project.name || "")
+        setEditDesc(project.description || "")
+    }
+
+    const handleShare = (e: React.MouseEvent, type: 'project' | 'chat', id: string | number) => {
+        e.stopPropagation()
+        const url = `${window.location.origin}/share/${type}/${id}`
+        navigator.clipboard.writeText(url).then(() => {
+            alert(t.link_copied || "Link copied to clipboard")
+        })
     }
 
 
-    const filteredHistory = history.filter(chat =>
-        chat.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+
 
     return (
         <>
@@ -84,14 +223,17 @@ export function Sidebar({ history = [] }: SidebarProps) {
                     <nav className="space-y-6">
                         {/* Main Actions */}
                         <div className="space-y-1">
-                            <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all font-medium border border-transparent shadow-sm hover:shadow-md
+                            <button
+                                onClick={onNewChat}
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all font-medium border border-transparent shadow-sm hover:shadow-md
                                 bg-white text-zinc-900 ring-1 ring-zinc-200 hover:ring-red-200
-                                dark:bg-zinc-900 dark:text-white dark:ring-zinc-800 dark:hover:ring-red-900/50 group mb-2">
+                                dark:bg-zinc-900 dark:text-white dark:ring-zinc-800 dark:hover:ring-red-900/50 group mb-2"
+                            >
                                 <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors dark:bg-red-900/30 dark:text-red-400">
                                     <SquarePen className="h-3.5 w-3.5" />
                                 </div>
                                 <span className="group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{t.new_chat}</span>
-                            </Link>
+                            </button>
 
                             <button
                                 onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -135,12 +277,79 @@ export function Sidebar({ history = [] }: SidebarProps) {
                             </button>
 
                             {projects.length > 0 && projects.map((project) => (
-                                <button key={project.id} className="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
-                                    text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
-                                    dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200">
-                                    <Briefcase className={cn("h-4 w-4 shrink-0 transition-colors", project.color)} />
-                                    <span className="truncate text-left flex-1">{project.title}</span>
-                                </button>
+                                <div key={project.id} className="flex flex-col select-none">
+                                    <div
+                                        className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
+                                        text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
+                                        dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 cursor-pointer"
+                                        onClick={(e) => toggleProject(e, project.id)}>
+
+                                        <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                                            <span className={`transition-transform duration-200 text-zinc-400 ${expandedProjects.has(project.id) ? 'rotate-90' : ''}`}>
+                                                ▶
+                                            </span>
+                                            <Briefcase className={cn("h-4 w-4 shrink-0 transition-colors", project.color || "text-zinc-500")} />
+                                            <span className="truncate text-left flex-1">{project.name}</span>
+                                            {/* Count badge */}
+                                            {history.filter(h => h.projectId === project.id).length > 0 && (
+                                                <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full text-zinc-500 font-medium">
+                                                    {history.filter(h => h.projectId === project.id).length}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 bg-zinc-100 dark:bg-zinc-900 shadow-sm rounded-md px-1" onClick={e => e.stopPropagation()}>
+                                            <button
+                                                onClick={(e) => handleShare(e, 'project', project.id)}
+                                                className="p-1.5 text-zinc-500 hover:text-green-600 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                                                title={t.share || "Share"}
+                                            >
+                                                <Share2 className="h-3 w-3" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => openEditModal(e, project)}
+                                                className="p-1.5 text-zinc-500 hover:text-blue-600 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                                                title={t.edit || "Edit"}
+                                            >
+                                                <Edit2 className="h-3 w-3" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteProject(e, project.id)}
+                                                className="p-1.5 text-zinc-500 hover:text-red-600 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                                                title={t.delete || "Delete"}
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Render Chats inside Project */}
+                                    {expandedProjects.has(project.id) && (
+                                        <div className="pl-4 mt-1 space-y-0.5 border-l-2 border-zinc-100 dark:border-zinc-800 ml-4 mb-2 animate-in slide-in-from-top-2 duration-200">
+                                            {history.filter(chat => chat.projectId === project.id).length > 0 ? (
+                                                history.filter(chat => chat.projectId === project.id).map(chat => (
+                                                    <ChatListItem
+                                                        key={chat.id}
+                                                        chat={chat}
+                                                        searchQuery={searchQuery}
+                                                        handleShare={handleShare}
+                                                        onPin={() => onPinChat?.(chat.id)}
+                                                        onDelete={() => onDeleteChat?.(chat.id)}
+                                                        onRename={(newTitle) => onRenameChat?.(chat.id, newTitle)}
+                                                        onMove={(projectId) => onMoveChat?.(chat.id, projectId)}
+                                                        projects={projects}
+                                                        t={t}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <div className="px-3 py-2 text-[10px] text-zinc-400 italic">
+                                                    Empty project
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             ))}
 
                             {projects.length === 0 && (
@@ -166,24 +375,51 @@ export function Sidebar({ history = [] }: SidebarProps) {
                                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{t.history_title}</span>
                             </div>
 
-                            {/* History List */}
-                            {filteredHistory.length > 0 ? (
-                                filteredHistory.map((chat) => (
-                                    <button key={chat.id} className="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
-                                        text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
-                                        dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200">
-                                        <MessageSquare className="h-4 w-4 shrink-0 transition-colors
-                                            text-zinc-400 group-hover:text-red-500
-                                            dark:text-zinc-500 dark:group-hover:text-zinc-300" />
-                                        <span className="truncate text-left flex-1" dangerouslySetInnerHTML={{
-                                            __html: searchQuery ? chat.title.replace(new RegExp(`(${searchQuery})`, 'gi'), '<span class="bg-yellow-200 dark:bg-yellow-900 text-black dark:text-white">$1</span>') : chat.title
-                                        }} />
-                                    </button>
+                            {/* Pinned Chats */}
+                            {filteredHistory.filter(c => c.pinned).length > 0 && (
+                                <div className="mb-2">
+                                    <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">
+                                        <Pin className="h-3 w-3" /> Pinned
+                                    </div>
+                                    {filteredHistory.filter(c => c.pinned).map(chat => (
+                                        <ChatListItem
+                                            key={chat.id}
+                                            chat={chat}
+                                            searchQuery={searchQuery}
+                                            handleShare={handleShare}
+                                            onPin={() => onPinChat?.(chat.id)}
+                                            onDelete={() => onDeleteChat?.(chat.id)}
+                                            onRename={(newTitle) => onRenameChat?.(chat.id, newTitle)}
+                                            onMove={(projectId) => onMoveChat?.(chat.id, projectId)}
+                                            projects={projects}
+                                            t={t}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Recent (Unpinned) Chats */}
+                            {filteredHistory.filter(c => !c.pinned).length > 0 ? (
+                                filteredHistory.filter(c => !c.pinned).map((chat) => (
+                                    <ChatListItem
+                                        key={chat.id}
+                                        chat={chat}
+                                        searchQuery={searchQuery}
+                                        handleShare={handleShare}
+                                        onPin={() => onPinChat?.(chat.id)}
+                                        onDelete={() => onDeleteChat?.(chat.id)}
+                                        onRename={(newTitle) => onRenameChat?.(chat.id, newTitle)}
+                                        onMove={(projectId) => onMoveChat?.(chat.id, projectId)}
+                                        projects={projects}
+                                        t={t}
+                                    />
                                 ))
                             ) : (
-                                <div className="px-3 py-4 text-center text-xs text-zinc-400 italic">
-                                    {searchQuery ? "No results found" : "No history"}
-                                </div>
+                                filteredHistory.length === 0 && (
+                                    <div className="px-3 py-4 text-center text-xs text-zinc-400 italic">
+                                        {searchQuery ? "No results found" : "No history"}
+                                    </div>
+                                )
                             )}
                         </div>
                     </nav>
@@ -225,6 +461,89 @@ export function Sidebar({ history = [] }: SidebarProps) {
                 onCreate={handleCreateProject}
             />
             <MemoDialog open={memoOpen} onClose={() => setMemoOpen(false)} />
+
+            {/* Edit Project Modal */}
+            {editingProject && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-lg p-6 space-y-4 animate-in zoom-in-95">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-semibold text-lg">{t.edit_project}</h3>
+                            <button onClick={() => setEditingProject(null)}><div className="h-4 w-4" /></button>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-zinc-500">Name</label>
+                            <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="ghost" onClick={() => setEditingProject(null)}>Cancel</Button>
+                            <Button onClick={handleUpdateProject}>Save</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
+    )
+}
+
+// Sub-component for Chat List Item to cleaner code
+function ChatListItem({ chat, searchQuery, handleShare, onPin, onDelete, onRename, onMove, projects, t }: any) {
+    return (
+        <div className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
+            text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
+            dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 cursor-pointer">
+            <MessageSquare className="h-4 w-4 shrink-0 transition-colors
+                text-zinc-400 group-hover:text-red-500
+                dark:text-zinc-500 dark:group-hover:text-zinc-300" />
+            <span className="truncate text-left flex-1" dangerouslySetInnerHTML={{
+                __html: searchQuery ? chat.title.replace(new RegExp(`(${searchQuery})`, 'gi'), '<span class="bg-yellow-200 dark:bg-yellow-900 text-black dark:text-white">$1</span>') : chat.title
+            }} />
+
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 bg-zinc-100 dark:bg-zinc-900 shadow-sm rounded-md px-1" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => onPin()}>
+                            <Pin className="mr-2 h-3.5 w-3.5" /> {chat.pinned ? "Unpin" : "Pin Chat"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => handleShare(e, 'chat', chat.id)}>
+                            <Share2 className="mr-2 h-3.5 w-3.5" /> {t.share || "Share"}
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                                <Folder className="mr-2 h-3.5 w-3.5" /> Move to Project
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="w-48">
+                                <DropdownMenuLabel>Select Project</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {projects.length > 0 ? projects.map((p: any) => (
+                                    <DropdownMenuItem key={p.id} onClick={() => onMove(p.id)}>
+                                        {p.name}
+                                    </DropdownMenuItem>
+                                )) : (
+                                    <div className="px-2 py-1.5 text-xs text-zinc-500">No projects</div>
+                                )}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => {
+                            const newName = prompt("New chat name:", chat.title)
+                            if (newName) onRename(newName)
+                        }}>
+                            <Edit2 className="mr-2 h-3.5 w-3.5" /> Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10" onClick={() => onDelete()}>
+                            <Trash className="mr-2 h-3.5 w-3.5" /> Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </div>
     )
 }
