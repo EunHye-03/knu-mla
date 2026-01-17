@@ -124,8 +124,6 @@ class TermService:
         request: TermExplainRequest,
     ) -> TermExplainResponse:
 
-        request_id = str(uuid.uuid4())
-
         term_row = self.find_term_by_name(db, request.term)
         if not term_row:
             term_row = self.create_term(db, request.term)
@@ -152,7 +150,10 @@ class TermService:
             text=request.term,
             source_lang="ko",
             target_lang=target_lang,
-        )
+        )            
+        
+        if translated_term_raw is None:
+            raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, message="translated term explain failed")
 
         if target_lang == "ko":
             translated_explanation_raw = explanation_text
@@ -165,9 +166,13 @@ class TermService:
         
         translated_term = self._to_text(translated_term_raw)
         translated_explanation = self._to_text(translated_explanation_raw)
+    
+        if translated_explanation_raw is None:
+            raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, message="translated explanation failed")
+
         
         return TermExplainResponse(
-            request_id=request_id,
+            request_id=None,
             success=True,
             data=TermExplainData(
                 term=request.term,

@@ -2,6 +2,8 @@ import logging
 from fastapi import Request
 
     
+_base_logger = logging.getLogger("app")
+
 class ContextFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         if not hasattr(record, "request_id"):
@@ -10,14 +12,17 @@ class ContextFilter(logging.Filter):
             record.user_idx = "-"
         return True
 
+def setup_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | request_id=%(request_id)s user_idx=%(user_idx)s | %(message)s",
+    )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | request_id=%(request_id)s | user_idx=%(user_idx)s | %(message)s",
-)
+    f = ContextFilter()
+    root = logging.getLogger()
+    for h in root.handlers:
+        h.addFilter(f)
 
-_base_logger = logging.getLogger("app")
-_base_logger.addFilter(ContextFilter())
 
 def get_logger(request: Request) -> logging.LoggerAdapter:
     request_id = getattr(request.state, "request_id", None)

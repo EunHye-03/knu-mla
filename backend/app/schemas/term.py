@@ -56,6 +56,6 @@ class TermExplainData(BaseModel):
 
 
 class TermExplainResponse(BaseModel):
-    request_id: str = Field(..., description="요청 ID")
+    request_id: Optional[str] = Field(default=None, description="요청 ID")
     success: bool = Field(..., description="용어 설명 성공 여부")
     data: TermExplainData = Field(..., description="용어 설명 데이터")

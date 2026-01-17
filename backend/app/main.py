@@ -11,14 +11,17 @@ from app.exceptions.handlers import register_exception_handlers
 from app.db.session import engine
 from app.db.base import Base
 from app.routes import router as api_router
+from app.core.logging import setup_logging
 
 def create_app() -> FastAPI:
+    setup_logging()
+
     app = FastAPI(title="KNU MLA API", version="0.1.0")
     
     @app.on_event("startup")
     def on_startup():
         Base.metadata.create_all(bind=engine)
-    
+        
     app.add_middleware(RequestLoggingMiddleware)
     
     register_exception_handlers(app)
@@ -37,7 +40,6 @@ def create_app() -> FastAPI:
                     "detail": {"type": type(exc).__name__},
                 },
             )
-
 
     app.add_middleware(
         CORSMiddleware,

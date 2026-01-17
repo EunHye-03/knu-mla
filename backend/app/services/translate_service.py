@@ -29,7 +29,7 @@ def translate_text(
   text: str,
   source_lang: Optional[str | Lang] = None,
   target_lang: str,
-) -> str:
+) -> dict:
     # ------- 입력 검증 ------
     if not text or not text.strip():
         raise AppError(
