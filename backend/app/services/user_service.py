@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.users import User
 from app.core.security import verify_password, hash_password
+from app.exceptions.error import AppError, ErrorCode
 
 
 def get_user_by_idx(db: Session, user_idx: int) -> User | None:
@@ -48,31 +49,31 @@ def update_user_me(
     if user_id is not None:
         user_id = user_id.strip()
         if not user_id:
-            raise HTTPException(status_code=422, detail="USER_ID_EMPTY")
+            raise AppError(ErrorCode.INVALID_REQUEST, detail="USER_ID_EMPTY")
 
         if user_id != user.user_id:
             exists = db.query(User).filter(User.user_id == user_id).first()
             if exists:
-                raise HTTPException(status_code=409, detail="USER_ID_ALREADY_EXISTS")
+                raise AppError(ErrorCode.ALREADY_EXISTS, detail="USER_ID_ALREADY_EXISTS")
             user.user_id = user_id
 
     # ---- nickname 변경 ----
     if nickname is not None:
         nickname = nickname.strip()
         if not nickname:
-            raise HTTPException(status_code=422, detail="NICKNAME_EMPTY")
+            raise AppError(ErrorCode.INVALID_REQUEST, detail="NICKNAME_EMPTY")
         user.nickname = nickname
 
     # ---- email 변경 ----
     if email is not None:
         email = email.strip().lower()
         if not email:
-            raise HTTPException(status_code=422, detail="EMAIL_EMPTY")
+            raise AppError(ErrorCode.INVALID_REQUEST, detail="EMAIL_EMPTY")
 
         if email != user.email:
             exists = db.query(User).filter(User.email == email).first()
             if exists:
-                raise HTTPException(status_code=409, detail="EMAIL_ALREADY_EXISTS")
+                raise AppError(ErrorCode.ALREADY_EXISTS, detail="EMAIL_ALREADY_EXISTS")
             user.email = email
 
     # ---- user_lang 변경 ----
@@ -80,21 +81,21 @@ def update_user_me(
         user_lang = user_lang.strip()
         # DB CHECK가 있어도 서비스 레벨에서 먼저 막아주면 좋음
         if user_lang not in {"ko", "en", "uz"}:
-            raise HTTPException(status_code=422, detail="INVALID_USER_LANG")
+            raise AppError(ErrorCode.INVALID_USER_LANG)
         user.user_lang = user_lang
 
     # ---- profile_image_url 변경 ----
     if profile_image_url is not None:
         profile_image_url = profile_image_url.strip()
         if not profile_image_url:
-            raise HTTPException(status_code=422, detail="PROFILE_IMAGE_URL_EMPTY")
+            raise AppError(ErrorCode.INVALID_REQUEST, detail="PROFILE_IMAGE_URL_EMPTY")
         user.profile_image_url = profile_image_url
         
     # ---- background_image_url 변경 ----
     if background_image_url is not None:
         background_image_url = background_image_url.strip()
         if not background_image_url:
-            raise HTTPException(status_code=422, detail="BACKGROUND_IMAGE_URL_EMPTY")
+            raise AppError(ErrorCode.INVALID_REQUEST, detail="BACKGROUND_IMAGE_URL_EMPTY")
         user.background_image_url = background_image_url
 
     # ---- is_dark_mode 변경 ----
@@ -111,11 +112,11 @@ def update_user_me(
 
 def change_password(db: Session, *, user: User, current_password: str, new_password: str) -> None:
     if not verify_password(current_password, user.password_hash):
-        raise HTTPException(status_code=401, detail="INVALID_PASSWORD")
+        raise AppError(ErrorCode.INVALID_CREDENTIALS, detail="INVALID_PASSWORD")
 
     # 같은 비번으로 변경 방지
     if verify_password(new_password, user.password_hash):
-        raise HTTPException(status_code=400, detail="SAME_PASSWORD_NOT_ALLOWED")
+        raise AppError(ErrorCode.SAME_PASSWORD_NOT_ALLOWED)
 
     user.password_hash = hash_password(new_password)
     db.add(user)
@@ -130,16 +131,15 @@ def withdraw_user(db: Session, *, user: User, password: str) -> None:
     """
     # 이미 탈퇴한 경우
     if user.is_active is False:
-        raise HTTPException(
-            status_code=400,
+        raise AppError(
+            ErrorCode.ACCOUNT_INACTIVE,
             detail="USER_DEACTIVATED",
         )
 
     # 비밀번호 검증
     if not verify_password(password, user.password_hash):
-        raise HTTPException(
-            status_code=401,
-            detail="INVALID_CREDENTIALS",
+        raise AppError(
+            ErrorCode.INVALID_CREDENTIALS
         )
 
     user.is_active = False

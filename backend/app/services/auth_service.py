@@ -16,7 +16,7 @@ def register_user(db: Session, req: UserRegister) -> User:
     회원가입: user_id 중복 체크 → password 해시 → User 생성
     """
     if get_user_by_id(db, req.user_id):
-        raise AppError(ErrorCode.DUPLICATE_USER_ID, message="user id already exists.")
+        raise AppError(ErrorCode.ALREADY_EXISTS, message="user id already exists.")
 
     if get_user_by_email(db, req.email):
         raise AppError(ErrorCode.DUPLICATE_EMAIL, message="email already exists.")
@@ -39,11 +39,11 @@ def register_user(db: Session, req: UserRegister) -> User:
     except IntegrityError:
         # 동시성 등으로 unique 위반이 여기로 들어올 수 있음
         db.rollback()
-        raise AppError(status_code=409, detail="DUPLICATE_USER")
+        raise AppError(ErrorCode.ALREADY_EXISTS, message="The resource already exists.")
 
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=500, detail="DB_ERROR")
+        raise AppError(ErrorCode.DB_ERROR)
 
 
 def authenticate_user(db: Session, *, user_id: str, password: str) -> User:
@@ -53,10 +53,10 @@ def authenticate_user(db: Session, *, user_id: str, password: str) -> User:
     user = get_user_by_id(db, user_id, only_active=True)
     
     if not user or not verify_password(password, user.password_hash):
-        raise HTTPException(status_code=401, detail="INVALID_CREDENTIALS")
+        raise AppError(ErrorCode.INVALID_CREDENTIALS)
     
     if hasattr(user, "is_active") and not user.is_active:
-        raise HTTPException(status_code=401, detail="USER_DEACTIVATED")
+        raise AppError(ErrorCode.ACCOUNT_INACTIVE)
 
     return user
 

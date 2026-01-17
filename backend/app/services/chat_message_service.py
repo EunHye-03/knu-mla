@@ -91,9 +91,8 @@ def delete_chat_message(
     )
 
     if msg is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Chat message not found",
+        raise AppError(
+            ErrorCode.CHAT_MESSAGE_NOT_FOUND
         )
 
     # 권한 체크: 해당 메시지가 속한 세션의 user_id가 나인지
@@ -104,15 +103,13 @@ def delete_chat_message(
     )
 
     if session_obj is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Chat session not found",
+        raise AppError(
+            ErrorCode.CHAT_MESSAGE_NOT_FOUND
         )
 
     if session_obj.user_idx != user_idx:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden",
+        raise AppError(
+            ErrorCode.CHAT_MESSAGE_FORBIDDEN
         )
 
     db.delete(msg)
