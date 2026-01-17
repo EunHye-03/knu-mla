@@ -10,6 +10,7 @@ from app.services.pdf_service import extract_text_from_pdf
 from app.services.summarize_service import summarize_text
 from app.services.translate_service import translate_text
 from app.services.chat_log_service import save_chat_messages
+from app.exceptions.error import AppError, ErrorCode
 
 router = APIRouter(prefix="", tags=["PDF"], dependencies=[Depends(get_current_user)])
 
@@ -41,7 +42,7 @@ def summarize_pdf(
         }
       
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise AppError(status_code=500, detail=str(e))
 
 
 @router.post("/translate/pdf")
@@ -81,4 +82,4 @@ def translate_pdf(
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR)

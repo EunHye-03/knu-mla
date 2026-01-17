@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.dependencies.auth import get_current_user
 from app.db.session import get_db
+from app.exceptions.error import AppError, ErrorCode
 from app.models.users import User
 from app.schemas.memo import MemoCreateRequest, MemoUpdateRequest, MemoResponse
 from app.services.memo_service import (
@@ -45,7 +46,10 @@ def post_memo(
             updated_at=memo.updated_at,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise AppError(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            message=str(e)
+        )
 
 
 @router.get("", response_model=list[MemoResponse])
@@ -99,11 +103,11 @@ def patch_memo(
             updated_at=memo.updated_at,
         )
     except MemoNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MEMO_NOT_FOUND")
+        raise AppError(ErrorCode.MEMO_NOT_FOUND)
     except ForbiddenMemoAccessError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="FORBIDDEN")
+        raise AppError(ErrorCode.FORBIDDEN)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR)
 
 
 @router.delete("/{memo_id}")
@@ -120,8 +124,8 @@ def delete_memo_item(
         )
         return {"success": True}
     except MemoNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MEMO_NOT_FOUND")
+        raise AppError(ErrorCode.MEMO_NOT_FOUND)
     except ForbiddenMemoAccessError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="FORBIDDEN")
+        raise AppError(ErrorCode.MEMO_FORBIDDEN)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR)

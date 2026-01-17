@@ -1,4 +1,4 @@
-import uuid
+import uuid, logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -7,9 +7,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.db.session import get_db
 from app.models.users import User
 from app.schemas.user import UserMe, UserMeUpdate, UserPasswordUpdate, UserWithdrawRequest, UserWithdrawResponse
+from app.exceptions.error import AppError, ErrorCode
 from app.dependencies.auth import get_current_user
 from app.services.user_service import update_user_me, change_password, withdraw_user
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("/me", response_model=UserMe)
@@ -44,10 +46,11 @@ def update_info(
                 background_image_url=req.background_image_url,
                 is_dark_mode=req.is_dark_mode,
         )
-    except HTTPException:
+    except AppError:
         raise
     except SQLAlchemyError:
-        raise HTTPException(status_code=500, detail="DB_ERROR")
+        logger.exception("database error", extra={"reason": str(e)})
+        raise AppError(error_code=ErrorCode.DB_ERROR)
 
   
   
@@ -66,10 +69,13 @@ def update_password(
         )
         return {"success": True}
 
-    except HTTPException:
+    except AppError:
+        # 이미 의미 있는 에러 → 그대로 전달
         raise
-    except SQLAlchemyError:
-        raise HTTPException(status_code=500, detail="DB_ERROR")
+    except SQLAlchemyError as e:
+        # DB 내부 에러는 로그에만 상세 기록
+        logger.exception("database error", extra={"reason": str(e)})
+        raise AppError(error_code=ErrorCode.DB_ERROR)
 
 
 
@@ -85,11 +91,12 @@ def withdraw_me(
         withdraw_user(db, user=current_user, password=req.password)
         return {"request_id": request_id, "success": True}
 
-    except HTTPException:
+    except AppError:
         raise
 
-    except SQLAlchemyError:
-        raise HTTPException(status_code=500, detail="DB_ERROR")
+    except SQLAlchemyError as e:
+        logger.exception("database error", extra={"reason": str(e)})
+        raise AppError(error_code=ErrorCode.DB_ERROR)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise AppError(ErrorCode.INTERNAL_SERVER_ERROR, detail=str(e))

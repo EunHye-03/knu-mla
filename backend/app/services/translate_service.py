@@ -34,15 +34,13 @@ def translate_text(
     if not text or not text.strip():
         raise AppError(
             message="Input text is empty.",
-            error_code=ErrorCode.INVALID_INPUT,
-            status_code=422,
+            error_code=ErrorCode.INVALID_TEXT,
         )
     
     if len(text) > MAX_TEXT_LENGTH:
         raise AppError(
             message=f"Input text is too long. Max {MAX_TEXT_LENGTH} chars.",
-            error_code=ErrorCode.INVALID_INPUT,
-            status_code=422,
+            error_code=ErrorCode.INVALID_TEXT,
         )
         
     try:
@@ -53,8 +51,7 @@ def translate_text(
     except ValueError:
         raise AppError(
             message="lang must be one of: ko, en, uz",
-            error_code=ErrorCode.INVALID_INPUT,
-            status_code=422,
+            error_code=ErrorCode.INVALID_TEXT,
         )
         
     src_line = (
@@ -115,8 +112,7 @@ def translate_text(
     except json.JSONDecodeError as e:
         raise AppError(
             message="Failed to parse LLM response as JSON.",
-            error_code=ErrorCode.UPSTREAM_ERROR,
-            status_code=502,
+            error_code=ErrorCode.SERVICE_UNAVAILABLE,
             detail=str(e),
         )
 
@@ -132,7 +128,7 @@ def translate_text(
     except (openai.APIConnectionError, openai.APIStatusError) as e:
         raise AppError(
             message="Upstream error occurred when calling OpenAI API.",
-            error_code=ErrorCode.UPSTREAM_ERROR,
+            error_code=ErrorCode.SERVICE_UNAVAILABLE,
             status_code=502,
             detail=str(e),
         )
@@ -140,7 +136,7 @@ def translate_text(
     except Exception as e:
         raise AppError(
             message="An internal error occurred during translation.",
-            error_code=ErrorCode.INTERNAL_ERROR,
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
             status_code=500,
             detail=str(e),
         )

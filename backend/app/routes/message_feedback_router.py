@@ -8,6 +8,7 @@ from app.dependencies.auth import get_current_user
 from app.schemas.message_feedback import FeedbackUpsertRequest, FeedbackUpsertResponse
 from app.services.message_feedback_service import upsert_message_feedback, get_message_feedback
 from app.dependencies.auth import get_current_user
+from app.exceptions.error import AppError, ErrorCode
 
 router = APIRouter(prefix="/feedback", tags=["Feedback"], dependencies=[Depends(get_current_user)])
 
@@ -30,7 +31,7 @@ def upsert_feedback(req: FeedbackUpsertRequest, db: Session = Depends(get_db)):
         )
     except Exception as e:
         # FK 없거나 message_id/session_id가 잘못된 경우 등 DB 예외가 여기로 옴
-        raise HTTPException(status_code=400, detail=str(e))
+        raise AppError(ErrorCode.INVALID_REQUEST)
 
 
 @router.get("", response_model=FeedbackUpsertResponse | None)

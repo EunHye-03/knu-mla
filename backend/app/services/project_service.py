@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.project import Project
 from app.models.chat_session import ChatSession
 from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.exceptions.error import AppError, ErrorCode
 
 
 # ---------- helpers ----------
@@ -16,7 +17,7 @@ def _get_project_or_404(db: Session, project_session_id: int, user_idx: int) -> 
     )
     obj = db.execute(stmt).scalars().first()
     if not obj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise AppError(ErrorCode.PROJECT_NOT_FOUND, detail="Project not found")
     return obj
 
 
@@ -27,7 +28,7 @@ def _get_chat_session_or_404(db: Session, chat_session_id: int, user_idx: int) -
     )
     obj = db.execute(stmt).scalars().first()
     if not obj:
-        raise HTTPException(status_code=404, detail="Chat session not found")
+        raise AppError(ErrorCode.CHAT_SESSION_NOT_FOUND, detail="Chat session not found")
     return obj
 
 def get_project_with_chat_sessions(db: Session, *, project_session_id: int, user_idx: int) -> Project:
@@ -38,7 +39,7 @@ def get_project_with_chat_sessions(db: Session, *, project_session_id: int, user
     )
     obj = db.execute(stmt).scalars().first()
     if not obj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise AppError(ErrorCode.PROJECT_NOT_FOUND, detail="Project not found")
     return obj
 
 
@@ -113,7 +114,7 @@ def attach_chat_session_to_project(
 
     # 정책: 이미 다른 프로젝트에 붙어 있으면 막기
     if session.project_id is not None:
-        raise HTTPException(status_code=409, detail="Chat session is already attached to another project")
+        raise AppError(ErrorCode.DUPLICATE_PROJECT, message="Chat session is already attached to another project")
 
     session.project_id = project_session_id
     db.commit()
@@ -129,9 +130,9 @@ def detach_chat_session_from_project(
     session = _get_chat_session_or_404(db, chat_session_id, user_idx)
 
     if session.project_id is None:
-        raise HTTPException(status_code=409, detail="Chat session is not attached to any project")
+        raise AppError(ErrorCode.CHAT_SESSION_NOT_ATTACHED_TO_PROJECT, message="Chat session is not attached to any project")
     if session.project_id != project_session_id:
-        raise HTTPException(status_code=409, detail="Chat session is attached to a different project")
+        raise AppError(ErrorCode.CHAT_SESSION_PROJECT_MISMATCH, message="Chat session is attached to a different project")
 
     session.project_id = None
     db.commit()

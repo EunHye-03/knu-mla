@@ -14,6 +14,7 @@ class ErrorCode(str, Enum):
     INVALID_TERM = "INVALID_TERM"
     INVALID_PDF = "INVALID_PDF"
     INVALID_PPTX = "INVALID_PPTX"
+    INVALID_TOKEN = "INVALID_TOKEN"
 
     # 401
     UNAUTHORIZED = "UNAUTHORIZED"
@@ -25,6 +26,7 @@ class ErrorCode(str, Enum):
     CHAT_SESSION_FORBIDDEN = "CHAT_SESSION_FORBIDDEN"
     CHAT_MESSAGE_FORBIDDEN = "CHAT_MESSAGE_FORBIDDEN"
     PROJECT_FORBIDDEN = "PROJECT_FORBIDDEN"
+    MEMO_FORBIDDEN = "MEMO_FORBIDDEN"
 
     # 404
     RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
@@ -34,13 +36,20 @@ class ErrorCode(str, Enum):
     FILE_NOT_FOUND = "FILE_NOT_FOUND"
     PROJECT_NOT_FOUND = "PROJECT_NOT_FOUND"
     PROJECT_SESSION_NOT_FOUND = "PROJECT_SESSION_NOT_FOUND"
+    MEMO_NOT_FOUND = "MEMO_NOT_FOUND"
     
     # 409
+    CONFLICT = "CONFLICT"
     DUPLICATE_USER_NAME = "DUPLICATE_USER_NAME"
     DUPLICATE_USER_ID = "DUPLICATE_USER_ID"
     DUPLICATE_EMAIL = "DUPLICATE_EMAIL"
     DUPLICATE_PROJECT_NAME = "DUPLICATE_PROJECT_NAME"
     TOKEN_ALREADY_USED = "TOKEN_ALREADY_USED"
+    TOKEN_EXPIRED = "TOKEN_EXPIRED"
+    DUPLICATE_PROJECT = "DUPLICATE_PROJECT"
+    CHAT_SESSION_NOT_ATTACHED_TO_PROJECT = "CHAT_SESSION_NOT_ATTACHED_TO_PROJECT"
+    CHAT_SESSION_PROJECT_MISMATCH = "CHAT_SESSION_PROJECT_MISMATCH"
+
     
     # 413
     INPUT_TOO_LONG = "INPUT_TOO_LONG"
@@ -57,6 +66,7 @@ class ErrorCode(str, Enum):
     
     # 500
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    DB_ERROR = "DB_ERROR"
     
     # 502
     AI_REQUEST_FAILED = "AI_REQUEST_FAILED"
@@ -76,6 +86,7 @@ ERROR_CODE_TO_STATUS: dict[ErrorCode, int] = {
     ErrorCode.INVALID_TERM: 400,
     ErrorCode.INVALID_PDF: 400,
     ErrorCode.INVALID_PPTX: 400,
+    ErrorCode.INVALID_TOKEN: 400,
 
     # 401
     ErrorCode.UNAUTHORIZED: 401,
@@ -87,6 +98,7 @@ ERROR_CODE_TO_STATUS: dict[ErrorCode, int] = {
     ErrorCode.CHAT_SESSION_FORBIDDEN: 403,
     ErrorCode.CHAT_MESSAGE_FORBIDDEN: 403,
     ErrorCode.PROJECT_FORBIDDEN: 403,
+    ErrorCode.MEMO_FORBIDDEN: 403,
 
     # 404
     ErrorCode.RESOURCE_NOT_FOUND: 404,
@@ -96,13 +108,20 @@ ERROR_CODE_TO_STATUS: dict[ErrorCode, int] = {
     ErrorCode.FILE_NOT_FOUND: 404,
     ErrorCode.PROJECT_NOT_FOUND: 404,
     ErrorCode.PROJECT_SESSION_NOT_FOUND: 404,
+    ErrorCode.MEMO_NOT_FOUND: 404,
 
     # 409
+    ErrorCode.CONFLICT: 409,
     ErrorCode.DUPLICATE_USER_NAME: 409,
     ErrorCode.DUPLICATE_USER_ID: 409,
     ErrorCode.DUPLICATE_EMAIL: 409,
     ErrorCode.DUPLICATE_PROJECT_NAME: 409,
     ErrorCode.TOKEN_ALREADY_USED: 409,
+    ErrorCode.TOKEN_EXPIRED: 409,
+    ErrorCode.DUPLICATE_PROJECT: 409,
+    ErrorCode.CHAT_SESSION_NOT_ATTACHED_TO_PROJECT: 409,
+    ErrorCode.CHAT_SESSION_PROJECT_MISMATCH: 409,
+
 
     # 413
     ErrorCode.INPUT_TOO_LONG: 413,
@@ -119,6 +138,7 @@ ERROR_CODE_TO_STATUS: dict[ErrorCode, int] = {
 
     # 500+
     ErrorCode.INTERNAL_SERVER_ERROR: 500,
+    ErrorCode.DB_ERROR: 500,
     ErrorCode.AI_REQUEST_FAILED: 502,
     ErrorCode.SERVICE_UNAVAILABLE: 503,
 }
@@ -132,13 +152,13 @@ class AppError(Exception):
         self,
         *,
         error_code: ErrorCode,
-        message: str,
+        message: str | None = None,
         details: Optional[dict[str, Any]] = None,
     ) -> None:
         super().__init__(message)
         self.error_code = error_code
         self.message = message
-        self.details = details or {}
+        self.details = dict(details) if details else {}
         
     @property
     def status_code(self) -> int:

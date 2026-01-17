@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.models.users import User
 from app.schemas.auth import UserRegister
 from app.core.security import hash_password, verify_password, create_access_token
+from app.exceptions.error import AppError, ErrorCode
 from app.services.user_service import get_user_by_id, get_user_by_email
 
 RESET_EXPIRE_MINUTES = 15
@@ -15,10 +16,10 @@ def register_user(db: Session, req: UserRegister) -> User:
     회원가입: user_id 중복 체크 → password 해시 → User 생성
     """
     if get_user_by_id(db, req.user_id):
-        raise HTTPException(status_code=409, detail="USER_ID_ALREADY_EXISTS")
+        raise AppError(ErrorCode.DUPLICATE_USER_ID, message="user id already exists.")
 
     if get_user_by_email(db, req.email):
-        raise HTTPException(status_code=409, detail="EMAIL_ALREADY_EXISTS")
+        raise AppError(ErrorCode.DUPLICATE_EMAIL, message="email already exists.")
     
     try:
         user = User(
@@ -38,7 +39,7 @@ def register_user(db: Session, req: UserRegister) -> User:
     except IntegrityError:
         # 동시성 등으로 unique 위반이 여기로 들어올 수 있음
         db.rollback()
-        raise HTTPException(status_code=409, detail="DUPLICATE_USER")
+        raise AppError(status_code=409, detail="DUPLICATE_USER")
 
     except SQLAlchemyError:
         db.rollback()

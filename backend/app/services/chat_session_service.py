@@ -9,6 +9,7 @@ from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
 from app.schemas.chat_session import ChatSessionCreate
 from app.models.project import Project
+from app.exceptions.error import AppError, ErrorCode
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
@@ -94,8 +95,8 @@ def delete_chat_session(
     )
 
     if msg is None:
-        raise HTTPException(
-            status_code=404,
+        raise AppError(
+            ErrorCode.CHAT_MESSAGE_NOT_FOUND,
             detail="Chat message not found",
         )
 
@@ -107,14 +108,14 @@ def delete_chat_session(
     )
 
     if session_obj is None:
-        raise HTTPException(
-            status_code=404,
+        raise AppError(
+            ErrorCode.CHAT_SESSION_NOT_FOUND,
             detail="Chat session not found",
         )
 
     if session_obj.user_idx != user_idx:
-        raise HTTPException(
-            status_code=403,
+        raise AppError(
+            ErrorCode.CHAT_SESSION_FORBIDDEN,
             detail="Forbidden",
         )
 
@@ -236,14 +237,14 @@ def update_chat_session_title(
     )
 
     if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise AppError(
+            ErrorCode.CHAT_SESSION_NOT_FOUND,
             detail="Chat session not found",
         )
 
     if session.user_idx != user_idx:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppError(
+            ErrorCode.CHAT_SESSION_FORBIDDEN,
             detail="Forbidden",
         )
 

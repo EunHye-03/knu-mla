@@ -23,7 +23,7 @@ def create_message(
 
     # 1) chat_session_id 없으면 새 세션 생성
     if data.chat_session_id is None:
-        raise AppError(ErrorCode.BAD_REQUEST)  # 혹은 VALIDATION_ERROR
+        raise AppError(ErrorCode.INVALID_REQUEST)  # 혹은 VALIDATION_ERROR
 
     chat_session_id = data.chat_session_id
 
@@ -37,7 +37,7 @@ def create_message(
         .first()
     )
     if not session:
-        raise AppError(ErrorCode.NOT_FOUND)
+        raise AppError(ErrorCode.CHAT_SESSION_NOT_FOUND)
 
     msg = ChatMessage(
         chat_session_id=chat_session_id,

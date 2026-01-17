@@ -91,6 +91,9 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     elif status == 413:
         error_code = ErrorCode.FILE_TOO_LARGE
         message = "Payload too large."
+    elif status == 409:
+        error_code = ErrorCode.CONFLICT
+        message = "The request conflicts with the current state."
     elif status == 415:
         error_code = ErrorCode.UNSUPPORTED_FILE_TYPE
         message = "Unsupported media type."
