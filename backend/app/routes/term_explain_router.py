@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -19,7 +19,8 @@ router = APIRouter(prefix="/term/explain", tags=["Term-Explain"])
 def explain(
     req_http: Request,
     payload: TermExplainRequest, 
-    chat_session_id: int | None = None,
+    chat_session_id: int | None = Query(default=None),
+    project_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> TermExplainResponse: 
@@ -66,6 +67,7 @@ def explain(
             request_id=resp.request_id,
             target_lang=getattr(payload, "target_lang", None),
             source_lang=getattr(payload, "source_lang", None),
+            project_id=project_id,
         )
 
         log.info("TERM_EXPLAIN_CHAT_SAVE_SUCCESS")

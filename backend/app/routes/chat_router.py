@@ -104,10 +104,10 @@ def get_sessions(
 
 
 # 세션 삭제
-@router.delete("", status_code=204)
+@router.delete("/sessions/{chat_session_id}", status_code=204)
 def delete_session(
     req: Request,
-    chat_session_id: int = Query(..., ge=1),
+    chat_session_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Response:
@@ -401,6 +401,7 @@ def get_recent_sessions(
                 chat_session_id=s.chat_session_id,
                 title=s.title,
                 created_at=s.created_at,
+                project_id=s.project_id,
                 updated_at=getattr(s, "updated_at", None),
             )
             for s in sessions
@@ -480,6 +481,7 @@ def search_sessions(
                 chat_session_id=s.chat_session_id,
                 title=s.title,
                 created_at=s.created_at,
+                project_id=s.project_id,
                 updated_at=getattr(s, "updated_at", None),
             )
             for s in sessions

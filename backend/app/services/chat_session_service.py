@@ -80,29 +80,18 @@ def get_chat_session_for_user(
 def delete_chat_session(
     *,
     db: Session,
-    chat_message_id: int,
+    chat_session_id: int,
     user_idx: int,
 ) -> None:
     """
-    메시지 1개 삭제
-    - message -> session 조인해서 '내 세션' 메시지인지 권한 체크
+    채팅 세션 삭제
+    - 세션 조회 후 본인 소유인지 권한 체크
+    - cascade="all, delete-orphan" 설정에 의해 메시지도 자동 삭제됨
     """
 
-    msg: ChatMessage | None = (
-        db.query(ChatMessage)
-        .filter(ChatMessage.chat_message_id == chat_message_id)
-        .first()
-    )
-
-    if msg is None:
-        raise AppError(
-            error_code=ErrorCode.CHAT_MESSAGE_NOT_FOUND
-        )
-
-    # 권한 체크: 해당 메시지가 속한 세션의 user_id가 나인지
     session_obj: ChatSession | None = (
         db.query(ChatSession)
-        .filter(ChatSession.chat_session_id == msg.chat_session_id)
+        .filter(ChatSession.chat_session_id == chat_session_id)
         .first()
     )
 
@@ -116,8 +105,7 @@ def delete_chat_session(
             error_code=ErrorCode.CHAT_SESSION_FORBIDDEN
         )
 
-
-    db.delete(msg)
+    db.delete(session_obj)
     db.commit()
 
 

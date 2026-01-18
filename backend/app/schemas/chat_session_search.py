@@ -28,6 +28,7 @@ class ChatSessionListItem(BaseModel):
     chat_session_id: int = Field(..., description="채팅 세션 ID")
     title: Optional[str] = Field(default=None, description="세션 제목(없을 수 있음)")
     created_at: datetime = Field(..., description="세션 생성 시각")
+    project_id: Optional[int] = Field(default=None, description="프로젝트 ID")
 
     # 선택: 화면에서 최신성 기준을 더 자연스럽게 하고 싶으면 추가 추천
     updated_at: Optional[datetime] = Field(default=None, description="마지막 업데이트 시각(선택)")

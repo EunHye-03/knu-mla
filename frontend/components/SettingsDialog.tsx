@@ -8,7 +8,7 @@ import { useLanguage } from "@/components/layout/language-context"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
-import { X, User, Moon, Sun, Monitor, LogOut, Trash2 } from "lucide-react"
+import { X, User, Moon, Sun, LogOut, Trash2 } from "lucide-react"
 import { useBackground } from "@/components/layout/background-provider"
 import { Switch } from "@/components/ui/Switch"
 
@@ -121,7 +121,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     <div className="space-y-2">
                         <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{t.appearance_section}</h3>
 
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={() => setTheme("light")}
                                 className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all active:scale-95 ${theme === "light"
@@ -142,16 +142,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 <Moon className="h-4 w-4 mb-1" />
                                 <span className="text-[10px] font-bold uppercase">{t.theme_dark}</span>
                             </button>
-                            <button
-                                onClick={() => setTheme("system")}
-                                className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all active:scale-95 ${theme === "system"
-                                    ? "bg-blue-50 border-blue-200 text-blue-600 shadow-[0_2px_0_0_rgba(37,99,235,0.2)]"
-                                    : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
-                                    }`}
-                            >
-                                <Monitor className="h-4 w-4 mb-1" />
-                                <span className="text-[10px] font-bold uppercase">{t.theme_system}</span>
-                            </button>
+
                         </div>
 
                         {/* Background Settings */}

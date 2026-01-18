@@ -10,7 +10,7 @@ from app.dependencies.auth import get_current_user
 from app.models.users import User
 from app.models.enums import FeatureType
 from app.services.chat_service import general_chat
-from app.services.chat_log_service import save_chat_messages_v2
+from app.services.chat_log_service import save_chat_messages
 from app.schemas.chat import ChatRequest, ChatResponse, ChatData
 from app.exceptions.error import AppError, ErrorCode
 
@@ -21,6 +21,7 @@ router = APIRouter(prefix="/chat", tags=["General Chat"])
 def chat_message(
     request: ChatRequest,
     chat_session_id: int | None = Query(default=None),
+    project_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -34,7 +35,7 @@ def chat_message(
         ai_response = general_chat(request.message)
         
         # Save to chat history
-        session_id = save_chat_messages_v2(
+        session_id = save_chat_messages(
             db=db,
             chat_session_id=chat_session_id,
             user_idx=current_user.user_idx,
@@ -42,6 +43,7 @@ def chat_message(
             user_content=request.message,
             assistant_content=ai_response,
             request_id=request_id,
+            project_id=project_id,
         )
         
         return ChatResponse(
