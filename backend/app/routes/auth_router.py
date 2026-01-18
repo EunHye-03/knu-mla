@@ -55,6 +55,7 @@ def login(request: Request, req: UserLogin, db: Session = Depends(get_db)):
                 "error_code": e.error_code,
             },
         )
+        raise
 
 @router.post("/logout", status_code=204)
 def logout(request: Request):

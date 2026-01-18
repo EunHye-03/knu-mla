@@ -14,7 +14,7 @@ from .pdf_router import router as pdf_router
 from .memo_router import router as memo_router
 from .password_reset_router import router as password_reset_router
 from .pptx_router import router as pptx_router
-from .find_user_id import router as find_user_id
+from .find_user_id_router import router as find_user_id_router
 
 router = APIRouter()
 router.include_router(health_router)
@@ -31,4 +31,4 @@ router.include_router(pdf_router)
 router.include_router(memo_router)
 router.include_router(password_reset_router)
 router.include_router(pptx_router)
-router.include_router(find_user_id)
+router.include_router(find_user_id_router)

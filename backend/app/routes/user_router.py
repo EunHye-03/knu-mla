@@ -102,7 +102,7 @@ def update_password(
 
 
 
-@router.delete("/withdraw", response_model=UserWithdrawResponse)
+@router.post("/withdraw", response_model=UserWithdrawResponse)
 def withdraw_me(
     request: Request,
     req: UserWithdrawRequest,
