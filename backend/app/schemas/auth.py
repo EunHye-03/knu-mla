@@ -9,7 +9,7 @@ class UserRegister(BaseModel):
     password: str = Field(..., min_length=8, max_length=72, examples=["password"]) 
     nickname: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    user_lang: Lang = Field(..., description= "ko, en, uz")
+    user_lang: Lang | None = Field(default=Lang.ko, description="ko, en, uz")
     
     @field_validator("password")
     @classmethod
