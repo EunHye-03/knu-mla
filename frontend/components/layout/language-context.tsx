@@ -71,6 +71,9 @@ interface Translations {
         cat_exam: string
         cat_group: string
         cat_language: string
+        cat_finance: string
+        cat_travel: string
+        cat_coding: string
 
         // Memo
         memo_title: string
@@ -190,6 +193,9 @@ const translations: Record<Language, Translations> = {
                 cat_exam: "시험 공부",
                 cat_group: "팀 프로젝트",
                 cat_language: "어학 공부",
+                cat_finance: "금융/자산",
+                cat_travel: "여행 계획",
+                cat_coding: "프로그래밍",
 
                 // Memo
                 memo_title: "메모",
@@ -300,6 +306,9 @@ const translations: Record<Language, Translations> = {
                 cat_exam: "Exam Prep",
                 cat_group: "Group Project",
                 cat_language: "Language Study",
+                cat_finance: "Finance",
+                cat_travel: "Travel",
+                cat_coding: "Coding",
 
                 // Memo
                 memo_title: "Memo Pad",
@@ -410,6 +419,9 @@ const translations: Record<Language, Translations> = {
                 cat_exam: "Imtihon",
                 cat_group: "Jamoaviy ish",
                 cat_language: "Til o'rganish",
+                cat_finance: "Moliya",
+                cat_travel: "Sayohat",
+                cat_coding: "Dasturlash",
 
                 // Memo
                 memo_title: "Eslatmalar",

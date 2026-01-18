@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { X, BookOpen, GraduationCap, PenTool, Users, Languages, Sparkles } from "lucide-react"
+import { X, BookOpen, GraduationCap, PenTool, Users, Languages, Sparkles, Plane, DollarSign, Code } from "lucide-react"
 import { useLanguage } from "@/components/layout/language-context"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -38,6 +38,9 @@ export function CreateProjectDialog({ open, onClose, onCreate }: CreateProjectDi
         { id: "exam", label: t.cat_exam, icon: GraduationCap, color: "text-red-500 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800" },
         { id: "group", label: t.cat_group, icon: Users, color: "text-green-500 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800" },
         { id: "language", label: t.cat_language, icon: Languages, color: "text-orange-500 border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800" },
+        { id: "finance", label: t.cat_finance, icon: DollarSign, color: "text-emerald-500 border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800" },
+        { id: "travel", label: t.cat_travel, icon: Plane, color: "text-sky-500 border-sky-200 bg-sky-50 dark:bg-sky-900/20 dark:border-sky-800" },
+        { id: "coding", label: t.cat_coding, icon: Code, color: "text-amber-500 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800" },
     ]
 
     return (

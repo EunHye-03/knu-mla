@@ -1,36 +1,216 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KNU Multilingual Assistant (KNU MLA)
 
-## Getting Started
+경북대학교 유학생 및 다국어 사용 학생들을 위한  
+AI 기반 다국어 학습·생활 지원 챗봇 서비스
 
-First, run the development server:
 
+---
+
+## 📌 프로젝트 개요
+
+- 강의 자료, 과제 공지, 대학 생활 용어 등  
+  한국 대학 환경에서 발생하는 언어 장벽 해결
+- 대학 맥락에 특화된 번역·요약·용어 설명 제공
+
+
+---
+
+## 🧩 주요 기능
+
+- 📄 텍스트 / PDF 번역 및 요약
+- 📚 대학생 용어 설명 챗봇
+- 🌍 다국어 UI (KR / EN / UZ)
+- 🔊 음성 입력 기반 요약·번역
+- 🗂  채팅 기록 관리
+- 🔐 사용자 인증 및 보안
+- ⚙️ 오류 처리 및 추적 시스템 
+
+
+---
+
+## 🛠 기술 스택
+
+### Backend
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- OpenAI API
+
+### Frontend
+- Next.js
+- TypeScript
+
+### Infra
+- GitHub
+- Render (Backend)
+- Vercel (Frontend)
+
+
+---
+
+## 🚀 실행 방법 (Local) 
+
+> **권장 순서**: Backend 먼저 실행 → Frontend 실행
+
+## ✅ 사전 준비
+
+- Git
+- Python 3.11+ (권장)
+- Node.js 18+ (권장)
+- PostgreSQL 14+ (로컬 설치 또는 Docker)
+
+
+---
+
+## 🔧 Backend 실행 (FastAPI)
+
+### 1️⃣ 백엔드 폴더 이동
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd backend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### 2) 가상환경 생성 & 활성화
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Windows (PowerShell)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-## Learn More
+macOS / Linux
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
-To learn more about Next.js, take a look at the following resources:
+#### 3) 의존성 설치
+```bash
+pip install -r requirements.txt
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### 4) 환경변수(.env) 설정
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`backend/.env` 파일을 생성하고 아래 예시를 참고해 채워주세요.
 
-## Deploy on Vercel
+```env
+# DB
+DATABASE_URL=postgresql+psycopg2://<USER>:<PASSWORD>@localhost:5432/<DB_NAME>
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Auth / Security
+SECRET_KEY=your-secret-key
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more detail.
+# OpenAI
+OPENAI_API_KEY=your-openai-api-key
+
+# SMTP (비밀번호 재설정 이메일 사용 시, Mailtrap - development)
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USERNAME=your-mailtrap-username
+SMTP_PASSWORD=your-mailtrap-password
+SMTP_FROM_NAME=KNU MLA
+```
+
+> ✅ 필수 항목: `DATABASE_URL`, `OPENAI_API_KEY`
+
+#### 5) DB 준비 (마이그레이션 / 시드)
+
+시드 SQL이 있는 경우:
+```bash
+psql -d <DB_NAME> -f backend/app/db/seeds/<seed_file>.sql
+```
+
+#### 6) 서버 실행
+```bash
+uvicorn app.main:app --reload
+```
+
+#### API 문서(Swagger)
+- http://localhost:8000/docs
+
+
+---
+
+### Frontend 실행 (Next.js)
+
+#### 1) 프론트 폴더 이동
+```bash
+cd frontend
+```
+
+#### 2) 의존성 설치
+```bash
+npm install
+```
+
+#### 3) 환경변수(.env.local) 설정
+
+frontend/.env.local 파일 생성:
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+```
+
+#### 4) 실행
+```bash
+npm run dev
+```
+
+### 접속
+
+- http://localhost:3000
+
+
+---
+
+## 🔧 Troubleshooting
+
+CORS 에러: 백엔드 CORS 설정에 http://localhost:3000 추가 필요
+
+DB 연결 실패: DATABASE_URL의 유저/비번/DB명/포트 확인
+
+OpenAI 에러: OPENAI_API_KEY 유효성 및 결제/쿼터 확인
+
+---
+
+
+## 🌐 Deployment
+
+### Backend
+
+- **Platform**: Render
+- **Runtime**: Python (FastAPI)
+- **Start Command**:
+  ```bash
+  uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  ```
+- **API Documentation (Swagger)**:
+  👉 https://knu-mla-backend.onrender.com/docs
+
+> 📌 Backend 서버는 Render 환경에 배포되어 있으며,
+> 데이터베이스는 외부 PostgreSQL을 사용하여 연동합니다.
+
+### Frontend
+Platform: Vercel
+
+Framework: Next.js (App Router)
+
+Deployment URL: 👉 https://knu-mla.vercel.app
+
+Environment Variable: NEXT_PUBLIC_API_URL is configured to point to the Render backend service (https://knu-mla-backend.onrender.com).
+
+📌 The Frontend is hosted on Vercel and features automated deployments from the GitHub repository (CI/CD) with every commit.
+
+---
+
+## 노션 문서 링크
+https://www.notion.so/KNU-MLA-2ec258ac18aa808aa34aff0adc53c981?source=copy_link
+
+---
+
+## 시연 영상 링크
+
+ https://youtu.be/VZzzfCz2p3c?si=25ihuHdeIJwFIGcz뭐
+ 
+
+---

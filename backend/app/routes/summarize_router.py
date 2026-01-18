@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -19,7 +19,8 @@ router = APIRouter(prefix="/summarize", tags=["Summarize"])
 def summarize(
     request: Request,
     req: SummarizeRequest,
-    chat_session_id: int | None = None,  # ✅ 프론트 연동용
+    chat_session_id: int | None = Query(default=None),
+    project_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> SummarizeResponse:
@@ -55,6 +56,7 @@ def summarize(
             user_content=req.text,
             assistant_content=summarized_text,
             request_id=request.state.request_id,
+            project_id=project_id,
         )
         log.info("SUMMARIZE_CHAT_SAVE_SUCCESS")
 

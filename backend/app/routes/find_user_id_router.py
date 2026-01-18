@@ -43,7 +43,7 @@ def find_user_id(
         response = find_user_id_and_send_email(
             db=db,
             email=str(req.email),
-            request_id=req.state.request_id,
+            request_id=request.state.request_id,
             strict_email_send=False,
         )
         

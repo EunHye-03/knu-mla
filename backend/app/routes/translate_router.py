@@ -21,6 +21,7 @@ def translate(
     req_http: Request,
     request: TranslateRequest,
     chat_session_id: int | None = None,
+    project_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> TranslateResponse:
@@ -68,6 +69,7 @@ def translate(
             request_id=req_http.state.request_id,
             source_lang=request.source_lang,
             target_lang=request.target_lang,
+            project_id=project_id,
         )
         log.info("TRANSLATE_CHAT_SAVE_SUCCESS")
     

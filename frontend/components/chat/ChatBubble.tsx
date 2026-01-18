@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Copy, RefreshCw, Bot, User, ThumbsUp, ThumbsDown, Share, FileText, Globe } from "lucide-react"
+import { Copy, Bot, User, ThumbsUp, ThumbsDown, Share, FileText, Globe } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card"
 import { cn } from "@/lib/utils"
@@ -165,18 +165,6 @@ export function ChatBubble({
                                 <Share className="h-4 w-4" />
                                 <span className="sr-only">Share</span>
                             </Button>
-                            <div className="ml-auto">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                                    onClick={onRegenerate}
-                                    title="Regenerate"
-                                >
-                                    <RefreshCw className="h-4 w-4" />
-                                    <span className="sr-only">Regenerate</span>
-                                </Button>
-                            </div>
                         </div>
                     </CardFooter>
                 </Card>

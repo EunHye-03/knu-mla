@@ -17,7 +17,17 @@ import {
     Pin,
     Folder,
     Trash,
-    Trash2
+    Trash2,
+    Plane,
+    DollarSign,
+    Code,
+    ChevronRight,
+    ChevronDown,
+    Sparkles,
+    BookOpen,
+    GraduationCap,
+    Users,
+    Languages
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -43,15 +53,17 @@ import { MemoDialog } from "@/components/MemoDialog"
 
 // Sidebar Props
 interface SidebarProps {
-    history?: { id: number, title: string, pinned?: boolean, projectId?: string | number }[]
-    onNewChat?: () => void
-    onPinChat?: (id: number) => void
+    history: any[]
+    onNewChat: (projectId?: string | number) => void
+    onPinChat: (id: number) => void
     onDeleteChat?: (id: number) => void
     onRenameChat?: (id: number, newTitle: string) => void
     onMoveChat?: (id: number, projectId: string | number) => void
+    onProjectClick?: (projectId: string | number) => void
+    onSelectChat?: (id: number) => void
 }
 
-export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRenameChat, onMoveChat }: SidebarProps) {
+export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRenameChat, onMoveChat, onProjectClick, onSelectChat }: SidebarProps) {
     const { user, logout } = useAuth()
     const { t } = useLanguage()
     const [settingsOpen, setSettingsOpen] = React.useState(false)
@@ -76,7 +88,7 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
     // Filter history for "Unsorted" (not in a project) main list
     const filteredHistory = history.filter(chat =>
         // Must match search query AND (not be in a project OR allow searching everything when searching)
-        chat.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        (chat.title || "").toLowerCase().includes(searchQuery.toLowerCase()) &&
         (!chat.projectId || searchQuery !== "") // Show all if searching, otherwise only unassigned
     )
 
@@ -132,6 +144,8 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
             setProjects(updated)
             localStorage.setItem("knu_mla_projects", JSON.stringify(updated))
 
+            // Auto start a new chat for this project
+            onNewChat(newProject.id)
         } catch (e) {
             // Fallback for demo if API fails completely
             const newProject = {
@@ -144,6 +158,9 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
             const updated = [...projects, newProject]
             setProjects(updated)
             localStorage.setItem("knu_mla_projects", JSON.stringify(updated))
+
+            // Auto start a new chat for this project (fallback)
+            onNewChat(newProject.id)
         }
     }
 
@@ -202,16 +219,22 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                 dark:bg-zinc-950 dark:text-zinc-300 dark:border-zinc-800">
 
                 {/* Header / Brand */}
-                <div className="p-3">
-                    <div className="flex items-center justify-between px-2 py-2">
-                        <Link href="/" className="flex items-center gap-2 rounded-md p-2 transition-colors flex-1
-                            hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                            <div className="h-6 w-6 rounded-full overflow-hidden border border-red-100 dark:border-red-900 shrink-0">
-                                <img src="/mascot.jpg" alt="Logo" className="w-full h-full object-cover" />
-                            </div>
-                            <span className="font-bold text-sm text-zinc-800 dark:text-zinc-100">KNU MLA</span>
-                        </Link>
-                    </div>
+                <div className="p-4 border-b border-zinc-100/50 dark:border-zinc-800/50 mb-2">
+                    <Link href="/" className="group flex items-center gap-3 px-1 py-1 transition-all duration-300">
+                        <div className="h-8 w-8 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm shrink-0">
+                            <img src="/mascot.png" alt="Logo" className="w-full h-full object-contain" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="font-black text-xl tracking-tighter italic uppercase leading-none
+                                bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-500 bg-clip-text text-transparent
+                                dark:from-white dark:via-zinc-200 dark:to-zinc-500">
+                                KNU MLA
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 tracking-[0.2em] uppercase opacity-80 mt-0.5">
+                                Assistant OS
+                            </span>
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Navigation */}
@@ -220,7 +243,7 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                         {/* Main Actions */}
                         <div className="space-y-1">
                             <button
-                                onClick={onNewChat}
+                                onClick={() => onNewChat?.()}
                                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all font-medium border border-transparent shadow-sm hover:shadow-md
                                 bg-white text-zinc-900 ring-1 ring-zinc-200 hover:ring-red-200
                                 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800 dark:hover:ring-red-900/50 group mb-2"
@@ -262,15 +285,19 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
 
                             <button
                                 onClick={() => setProjectDialogOpen(true)}
-                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all font-medium border border-transparent shadow-sm hover:shadow-md
-                                bg-white text-zinc-900 ring-1 ring-zinc-200 hover:ring-purple-200
-                                dark:bg-zinc-900 dark:text-white dark:ring-zinc-800 dark:hover:ring-purple-900/50 group"
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all font-semibold border border-transparent shadow-sm hover:shadow-md
+                                bg-gradient-to-br from-white to-zinc-50 text-zinc-900 border-zinc-200 hover:border-purple-300
+                                dark:from-zinc-900 dark:to-zinc-950 dark:text-white dark:border-zinc-800 dark:hover:border-purple-900/50 group"
                             >
-                                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors dark:bg-purple-900/30 dark:text-purple-400">
-                                    <FolderPlus className="h-3.5 w-3.5" />
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500 text-white shadow-sm transition-transform group-hover:scale-110">
+                                    <FolderPlus className="h-4 w-4" />
                                 </div>
-                                <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{t.new_project}</span>
+                                <div className="flex flex-col items-start leading-tight">
+                                    <span className="text-[13px]">{t.new_project}</span>
+                                    <span className="text-[10px] text-zinc-500 font-normal">{t.project_desc.slice(0, 20)}...</span>
+                                </div>
                             </button>
+
 
                             {projects.length > 0 && projects.map((project) => (
                                 <div key={project.id} className="flex flex-col select-none">
@@ -278,17 +305,35 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                                         className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
                                         text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
                                         dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 cursor-pointer"
-                                        onClick={(e) => toggleProject(e, project.id)}>
+                                        onClick={() => onProjectClick?.(project.id)}>
 
                                         <div className="flex items-center gap-2 flex-1 overflow-hidden">
-                                            <span className={`transition-transform duration-200 text-zinc-400 ${expandedProjects.has(project.id) ? 'rotate-90' : ''}`}>
-                                                ▶
+                                            <span
+                                                className="transition-transform duration-200 text-zinc-400 p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md shrink-0"
+                                                onClick={(e) => toggleProject(e, project.id)}
+                                            >
+                                                {/* Wait, toggleProject is usually sync, let me check */}
+                                                {expandedProjects.has(project.id) ? (
+                                                    <ChevronDown className="h-3 w-3" />
+                                                ) : (
+                                                    <ChevronRight className="h-3 w-3" />
+                                                )}
                                             </span>
-                                            <Briefcase className={cn("h-4 w-4 shrink-0 transition-colors", project.color || "text-zinc-500")} />
-                                            <span className="truncate text-left flex-1">{project.name}</span>
+                                            {project.category === "homework" && <BookOpen className={cn("h-4 w-4 shrink-0", project.color || "text-blue-500")} />}
+                                            {project.category === "research" && <Sparkles className={cn("h-4 w-4 shrink-0", project.color || "text-purple-500")} />}
+                                            {project.category === "exam" && <GraduationCap className={cn("h-4 w-4 shrink-0", project.color || "text-red-500")} />}
+                                            {project.category === "group" && <Users className={cn("h-4 w-4 shrink-0", project.color || "text-green-500")} />}
+                                            {project.category === "language" && <Languages className={cn("h-4 w-4 shrink-0", project.color || "text-orange-500")} />}
+                                            {project.category === "finance" && <DollarSign className={cn("h-4 w-4 shrink-0", project.color || "text-emerald-500")} />}
+                                            {project.category === "travel" && <Plane className={cn("h-4 w-4 shrink-0", project.color || "text-sky-500")} />}
+                                            {project.category === "coding" && <Code className={cn("h-4 w-4 shrink-0", project.color || "text-amber-500")} />}
+                                            {(!project.category || ["homework", "research", "exam", "group", "language", "finance", "travel", "coding"].indexOf(project.category) === -1) &&
+                                                <Briefcase className={cn("h-4 w-4 shrink-0", project.color || "text-zinc-500")} />
+                                            }
+                                            <span className="truncate text-left flex-1 font-medium">{project.name}</span>
                                             {/* Count badge */}
                                             {history.filter(h => h.projectId === project.id).length > 0 && (
-                                                <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full text-zinc-500 font-medium">
+                                                <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full text-zinc-500 font-bold">
                                                     {history.filter(h => h.projectId === project.id).length}
                                                 </span>
                                             )}
@@ -334,6 +379,7 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                                                         onDelete={() => onDeleteChat?.(chat.id)}
                                                         onRename={(newTitle) => onRenameChat?.(chat.id, newTitle)}
                                                         onMove={(projectId) => onMoveChat?.(chat.id, projectId)}
+                                                        onSelect={() => onSelectChat?.(chat.id)}
                                                         projects={projects}
                                                         t={t}
                                                     />
@@ -347,6 +393,14 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                                     )}
                                 </div>
                             ))}
+
+                            {projects.length > 3 && (
+                                <button className="flex w-full items-center gap-3 px-3 py-2 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+                                    <MoreHorizontal className="h-3 w-3" />
+                                    <span>See more projects</span>
+                                </button>
+                            )}
+
 
                             {projects.length === 0 && (
                                 <div className="px-3 py-2 text-xs text-zinc-400 italic">
@@ -387,6 +441,7 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                                             onDelete={() => onDeleteChat?.(chat.id)}
                                             onRename={(newTitle) => onRenameChat?.(chat.id, newTitle)}
                                             onMove={(projectId) => onMoveChat?.(chat.id, projectId)}
+                                            onSelect={() => onSelectChat?.(chat.id)}
                                             projects={projects}
                                             t={t}
                                         />
@@ -406,6 +461,7 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
                                         onDelete={() => onDeleteChat?.(chat.id)}
                                         onRename={(newTitle) => onRenameChat?.(chat.id, newTitle)}
                                         onMove={(projectId) => onMoveChat?.(chat.id, projectId)}
+                                        onSelect={() => onSelectChat?.(chat.id)}
                                         projects={projects}
                                         t={t}
                                     />
@@ -483,9 +539,22 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
 }
 
 // Sub-component for Chat List Item to cleaner code
-function ChatListItem({ chat, searchQuery, handleShare, onPin, onDelete, onRename, onMove, projects, t }: any) {
+function ChatListItem({ chat, searchQuery, handleShare, onPin, onDelete, onRename, onMove, onSelect, projects, t }: {
+    chat: any,
+    searchQuery: string,
+    handleShare: (e: React.MouseEvent, type: 'project' | 'chat', id: string | number) => void,
+    onPin: () => void,
+    onDelete: () => void,
+    onRename: (newTitle: string) => void,
+    onMove: (projectId: string | number) => void,
+    onSelect: () => void,
+    projects: any[],
+    t: any
+}) {
     return (
-        <div className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
+        <div
+            onClick={() => onSelect()}
+            className="group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
             text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900
             dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 cursor-pointer">
             <MessageSquare className="h-4 w-4 shrink-0 transition-colors

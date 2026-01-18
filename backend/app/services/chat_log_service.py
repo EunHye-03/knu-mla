@@ -22,6 +22,7 @@ def save_chat_messages(
     request_id: str,
     source_lang: Lang | None = None,
     target_lang: Lang | None = None,
+    project_id: Optional[int] = None,
 ) -> int:
     """
     트랜잭션으로 user/assistant 메시지 2개를 "원자적으로" 저장.
@@ -34,12 +35,26 @@ def save_chat_messages(
 
         # 1) 세션 없으면 생성
         if chat_session_id is None:
-            # Get user's preferred language
+            # Get user's language preference
             from app.models.users import User
             user = db.query(User).filter(User.user_idx == user_idx).first()
-            user_lang = user.user_lang if user and user.user_lang else "en"
             
-            session = ChatSession(user_idx=user_idx, title=None, user_lang=user_lang)
+            # Convert user_lang string to Lang enum
+            user_lang = Lang.en  # default
+            if user and user.user_lang:
+                try:
+                    # Map common language codes to Lang enum
+                    lang_map = {
+                        'en': Lang.en,
+                        'ko': Lang.ko,
+                        'uz': Lang.uz,
+                        'kr': Lang.ko,  # Korean alias
+                    }
+                    user_lang = lang_map.get(user.user_lang.lower(), Lang.en)
+                except:
+                    user_lang = Lang.en
+            
+            session = ChatSession(user_idx=user_idx, title=None, user_lang=user_lang, project_id=project_id)
             db.add(session)
             db.flush()          # chat_session_id 확보
             db.refresh(session)
@@ -81,9 +96,6 @@ def save_chat_messages(
                 request_id=request_id,
             ),
         )
-        
-        # 4) 제목 자동 설정 (딱 1번) - 삭제 (트랜잭션 밖으로 이동)
-        # auto_set_chat_title_if_empty(db, chat_session_id=chat_session_id)
     
         # with db.begin() 블록을 정상 통과하면 자동 commit
         return chat_session_id
@@ -99,7 +111,8 @@ def save_chat_messages(
     # 4) 제목 자동 설정 (트랜잭션 밖에서, 메시지가 commit된 후)
     try:
         auto_set_chat_title_if_empty(db, chat_session_id=session_id)
-    except Exception:
+    except Exception as e:
+        # Title generation failure shouldn't break the message save
         pass
-        
+    
     return session_id

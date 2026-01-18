@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { X, StickyNote, Save, Trash2, Pencil } from "lucide-react"
+import { X, StickyNote, Save, Trash2 } from "lucide-react"
 import { useLanguage } from "@/components/layout/language-context"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -28,11 +28,7 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
         onClose()
     }
 
-    const handleEdit = () => {
-        // For now, edit just saves the current note (could open an edit modal later)
-        localStorage.setItem("knu_mla_memo", note)
-        onClose()
-    }
+
 
     const handleDelete = () => {
         localStorage.removeItem("knu_mla_memo")
@@ -75,13 +71,7 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
                             <Save className="h-4 w-4 mr-2" />
                             {t.save_memo}
                         </Button>
-                        <Button
-                            className="bg-amber-400 hover:bg-amber-500 text-white border-none"
-                            onClick={handleEdit}
-                        >
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Edit
-                        </Button>
+
                         <Button
                             variant="destructive"
                             className="bg-red-500 hover:bg-red-600 text-white border-none"
