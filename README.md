@@ -173,6 +173,25 @@ OpenAI 에러: OPENAI_API_KEY 유효성 및 결제/쿼터 확인
 
 ---
 
+
+## 🌐 Deployment
+
+### Backend
+
+- **Platform**: Render
+- **Runtime**: Python (FastAPI)
+- **Start Command**:
+  ```bash
+  uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  ```
+- **API Documentation (Swagger)**:
+  👉 https://<render-backend-url>/docs
+
+> 📌 Backend 서버는 Render 환경에 배포되어 있으며,
+> 데이터베이스는 외부 PostgreSQL을 사용하여 연동합니다.
+
+---
+
 ## 노션 문서 링크
 https://www.notion.so/KNU-MLA-2ec258ac18aa808aa34aff0adc53c981?source=copy_link
 
