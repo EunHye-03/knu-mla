@@ -11,7 +11,7 @@ services:
         fromDatabase:
           name: knu-mla-db
           property: connectionString
-      - key: JWT_SECRET
+      - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
         value: "*"
