@@ -51,16 +51,26 @@ class ApiService {
                     }
                 }
 
+
                 const errorData = await response.json().catch(() => ({}));
-                let msg = errorData.detail || errorData.message || `API Error: ${response.statusText}`;
-                if (typeof msg === 'object') {
-                    // Handle Pydantic validation errors (array of objects)
-                    if (Array.isArray(msg) && msg.length > 0 && msg[0].msg) {
-                        msg = msg.map((err: any) => err.msg).join('\n');
-                    } else {
-                        msg = JSON.stringify(msg);
+                let msg = errorData.message || `API Error: ${response.statusText}`;
+
+                if (errorData.detail) {
+                    if (Array.isArray(errorData.detail) && errorData.detail.length > 0 && errorData.detail[0].msg) {
+                        msg = errorData.detail.map((err: any) => err.msg).join('\n');
+                    } else if (typeof errorData.detail === 'object' && errorData.detail.errors && Array.isArray(errorData.detail.errors)) {
+                        msg = errorData.detail.errors.map((err: any) => err.msg).join('\n');
+                    } else if (typeof errorData.detail === 'string') {
+                        msg = `${msg}\n${errorData.detail}`;
+                    } else if (typeof errorData.detail === 'object' && Object.keys(errorData.detail).length > 0) {
+                        // Don't overwrite msg with JSON detail if msg is already set (unless it's the generic fallback)
+                        if (msg.startsWith("API Error:")) {
+                            msg = JSON.stringify(errorData.detail);
+                        }
+                        // Otherwise (if we have a specific message like "ValueError..."), keep it.
                     }
                 }
+
                 throw new Error(msg);
             }
 

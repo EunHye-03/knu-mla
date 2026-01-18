@@ -16,6 +16,8 @@ class FeatureType(str, Enum):
     speech = "speech"
     pdf_summarize = "pdf_summarize"
     pdf_translate = "pdf_translate"
+    chat = "chat"
+    general = "general"
 
 
 class Lang(str, Enum):

@@ -110,9 +110,10 @@ def update_user_me(
 
 
 
-def change_password(db: Session, *, user: User, current_password: str, new_password: str) -> None:
-    if not verify_password(current_password, user.password_hash):
-        raise AppError(error_code=ErrorCode.INVALID_CREDENTIALS, detail={"reason": "INVALID_PASSWORD"})
+def change_password(db: Session, *, user: User, current_password: str | None, new_password: str, force: bool = False) -> None:
+    if not force:
+        if not current_password or not verify_password(current_password, user.password_hash):
+            raise AppError(error_code=ErrorCode.INVALID_CREDENTIALS, detail={"reason": "INVALID_PASSWORD"})
 
     # 같은 비번으로 변경 방지
     if verify_password(new_password, user.password_hash):
@@ -123,10 +124,10 @@ def change_password(db: Session, *, user: User, current_password: str, new_passw
     db.commit()
     
 
-def withdraw_user(db: Session, *, user: User, password: str) -> None:
+def withdraw_user(db: Session, *, user: User, password: str | None, force: bool = False) -> None:
     """
     회원 탈퇴(소프트 삭제):
-    - 비밀번호 확인
+    - 비밀번호 확인 (force=False일 때)
     - is_active=False, deleted_at=now()
     """
     # 이미 탈퇴한 경우
@@ -136,14 +137,14 @@ def withdraw_user(db: Session, *, user: User, password: str) -> None:
         )
 
     # 비밀번호 검증
-    if not verify_password(password, user.password_hash):
-        raise AppError(
-            error_code=ErrorCode.INVALID_CREDENTIALS
-        )
+    if not force:
+        if not password or not verify_password(password, user.password_hash):
+            raise AppError(
+                error_code=ErrorCode.INVALID_CREDENTIALS
+            )
 
     user.is_active = False
     user.deleted_at = func.now()
 
     db.add(user)
     db.commit()
-

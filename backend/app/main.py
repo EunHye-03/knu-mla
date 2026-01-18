@@ -26,18 +26,6 @@ def create_app() -> FastAPI:
     
     register_exception_handlers(app)
 
-<<<<<<< HEAD
-    @app.exception_handler(Exception)
-    async def debug_exception_handler(request: Request, exc: Exception):
-        print(f"ERROR: {exc}")
-        traceback.print_exc()
-        return JSONResponse(
-            status_code=500,
-            content={
-                "success": False,
-                "error": {
-                    "type": type(exc).__name__,
-=======
     if os.getenv("ENV", "dev") == "dev":
         @app.exception_handler(Exception)
         async def debug_exception_handler(request: Request, exc: Exception):
@@ -48,7 +36,6 @@ def create_app() -> FastAPI:
                     "success": False,
                     "request_id": request_id,
                     "error_code" : "INTERNAL_SERVER_ERROR",
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                     "message": str(exc),
                     "detail": {"type": type(exc).__name__},
                 },

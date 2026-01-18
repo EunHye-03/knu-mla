@@ -8,6 +8,15 @@ class OpenAIServiceError(Exception):
     def __init__(self, error_code: str, message: str):
         self.error_code = error_code
         super().__init__(message)
+
+# Aliases for backward compatibility or specificity if other modules depend on them
+class OpenAIRateLimitError(OpenAIServiceError):
+    def __init__(self, message: str = "OpenAI rate limit exceeded"):
+        super().__init__("RATE_LIMITED", message)
+
+class OpenAIUpstreamError(OpenAIServiceError):
+    def __init__(self, message: str = "Upstream service error"):
+        super().__init__("UPSTREAM_ERROR", message)
         
         
 def call_openai_safety(client, request_id: str, **kwargs):

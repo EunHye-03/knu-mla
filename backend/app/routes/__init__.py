@@ -32,3 +32,5 @@ router.include_router(memo_router)
 router.include_router(password_reset_router)
 router.include_router(pptx_router)
 router.include_router(find_user_id_router)
+from .general_chat_router import router as general_chat_router
+router.include_router(general_chat_router)
