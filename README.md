@@ -104,11 +104,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60
 # OpenAI
 OPENAI_API_KEY=your-openai-api-key
 
-# SMTP (비밀번호 재설정 이메일 사용 시)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
+# SMTP (비밀번호 재설정 이메일 사용 시, Mailtrap - development)
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USERNAME=your-mailtrap-username
+SMTP_PASSWORD=your-mailtrap-password
 SMTP_FROM_NAME=KNU MLA
 ```
 
@@ -134,7 +134,7 @@ uvicorn app.main:app --reload
 
 ### Frontend 실행 (Next.js)
 
-####1) 프론트 폴더 이동
+#### 1) 프론트 폴더 이동
 ```bash
 cd frontend
 ```
