@@ -190,6 +190,15 @@ OpenAI 에러: OPENAI_API_KEY 유효성 및 결제/쿼터 확인
 > 📌 Backend 서버는 Render 환경에 배포되어 있으며,
 > 데이터베이스는 외부 PostgreSQL을 사용하여 연동합니다.
 
+### Frontend
+Platform: Vercel
+
+Framework: Next.js (App Router)
+
+Deployment URL: 👉 https://knu-mla.vercel.app
+
+Environment Variable: NEXT_PUBLIC_API_URL is configured to point to the Render backend service (https://knu-mla-backend.onrender.com).
+📌 The Frontend is hosted on Vercel and features automated deployments from the GitHub repository (CI/CD) with every commit.
 ---
 
 ## 노션 문서 링크
