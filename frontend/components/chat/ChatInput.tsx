@@ -1,6 +1,6 @@
 "use client"
 import * as React from "react"
-import { SendHorizontal, Globe, FileText, BookOpen, Paperclip, Mic, StopCircle } from "lucide-react"
+import { SendHorizontal, Globe, FileText, BookOpen, Paperclip, Mic, StopCircle, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { api } from "@/services/api"
 import { cn } from "@/lib/utils"
@@ -11,12 +11,12 @@ interface ChatInputProps {
     isLoading?: boolean
 }
 
-type Mode = "translate" | "summarize" | "term"
+type Mode = "chat" | "translate" | "summarize" | "term"
 
 export function ChatInput({ onSend, isLoading }: ChatInputProps) {
     const { t, language } = useLanguage()
     const [input, setInput] = React.useState("")
-    const [mode, setMode] = React.useState<Mode>("translate")
+    const [mode, setMode] = React.useState<Mode>("chat")  // Default to chat for general conversation
     const [targetLang, setTargetLang] = React.useState<string>("uz") // Default target
     const [isRecording, setIsRecording] = React.useState(false)
     const [isUploading, setIsUploading] = React.useState(false)
@@ -177,6 +177,19 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
                     </Button>
 
                     <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1 self-center" />
+
+                    <Button
+                        variant={mode === "chat" ? "secondary" : "ghost"}
+                        size="sm"
+                        className={cn(
+                            "h-7 text-xs gap-1.5",
+                            mode === "chat" && "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
+                        )}
+                        onClick={() => setMode("chat")}
+                    >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        Chat
+                    </Button>
 
                     <div className="relative">
                         <Button

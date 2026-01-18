@@ -2,19 +2,20 @@
 
 import * as React from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { api } from "@/services/api"
 
 interface User {
     id: string
     name: string
-    password?: string
-    email?: string // Added email support
+    email?: string
     avatar?: string
+    background_image_url?: string
 }
 
 interface AuthContextType {
     user: User | null
-    login: (id: string, password?: string) => boolean
-    register: (name: string, id: string, password?: string, email?: string) => Promise<void>
+    login: (id: string, password?: string) => Promise<boolean>
+    register: (name: string, id: string, password?: string, email?: string) => Promise<boolean>
     logout: () => void
     updateUser: (data: Partial<User>) => void
     isLoading: boolean
@@ -31,89 +32,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         // Check local storage on mount
         const storedUser = localStorage.getItem("knu_mla_user")
-        if (storedUser) {
+        const storedToken = localStorage.getItem("knu_mla_token")
+        if (storedUser && storedToken) {
             setUser(JSON.parse(storedUser))
         }
         setIsLoading(false)
+
+        const handleAuthError = () => {
+            logout();
+        };
+        window.addEventListener('auth-error', handleAuthError);
+        return () => window.removeEventListener('auth-error', handleAuthError);
     }, [])
 
     React.useEffect(() => {
-        if (!isLoading && !user) {
-            const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password"]
-            const isPublicPath = publicPaths.some(path => pathname?.startsWith(path))
-
-            if (!isPublicPath) {
-                router.push("/login")
-            }
+        if (!isLoading && !user && pathname !== "/login" && pathname !== "/register") {
+            router.push("/login")
         }
     }, [user, isLoading, pathname, router])
 
-    const login = (id: string, password?: string) => {
-        // 1. Try to find user in our mock "database"
-        const usersDbStr = localStorage.getItem("knu_mla_users_db")
-        let foundUser: User | null = null
+    const login = async (id: string, password?: string): Promise<boolean> => {
+        try {
+            setIsLoading(true)
+            // Call API
+            const tokenData = await api.login(id, password || "");
 
-        if (usersDbStr) {
-            const usersDb = JSON.parse(usersDbStr) as User[]
-            foundUser = usersDb.find(u => u.id === id) || null
+            // Save Token
+            localStorage.setItem("knu_mla_token", tokenData.access_token);
+
+            // Get User Info
+            const userData = await api.getMe();
+
+            const loggedUser: User = {
+                id: userData.user_id,
+                name: userData.nickname,
+                email: userData.email,
+                avatar: userData.profile_image_url || "/mascot.jpg",
+            };
+
+            localStorage.setItem("knu_mla_user", JSON.stringify(loggedUser))
+            setUser(loggedUser)
+            router.push("/")
+            return true
+        } catch (error) {
+            console.error("Login failed", error);
+            alert("Login Failed: " + (error as Error).message);
+            return false;
+        } finally {
+            setIsLoading(false);
         }
-
-        // 2. If found, use that user's name. If not, default to ID (mock behavior for strictly prototyping)
-        const userToLogin: User = foundUser || {
-            id: id,
-            name: id,
-            avatar: "/mascot.jpg"
-        }
-
-        // 3. Set Session
-        localStorage.setItem("knu_mla_user", JSON.stringify(userToLogin))
-        setUser(userToLogin)
-        router.push("/")
-        return true
     }
 
-    const register = async (name: string, id: string, password?: string, email?: string) => {
+    const register = async (name: string, id: string, password?: string, email?: string): Promise<boolean> => {
         try {
-            // Call API
-            await import("@/services/api").then(m => m.api.signupWithEmail({ name, id, password, email }))
-
-            // On success, mock login
-            const newUser: User = {
-                id: id,
-                name: name,
-                email: email,
-                avatar: "/mascot.jpg"
-            }
-
-            // 1. Save to Session
-            localStorage.setItem("knu_mla_user", JSON.stringify(newUser))
-            setUser(newUser)
-
-            // 2. Save to Mock "Database"
-            const usersDbStr = localStorage.getItem("knu_mla_users_db")
-            const usersDb = usersDbStr ? JSON.parse(usersDbStr) as User[] : []
-            const tempDb = usersDb.filter(u => u.id !== id)
-            tempDb.push(newUser)
-            localStorage.setItem("knu_mla_users_db", JSON.stringify(tempDb))
-
-            router.push("/")
+            setIsLoading(true)
+            await api.register({
+                user_id: id,
+                nickname: name,
+                password: password || "",
+                email: email || `${id}@example.com`,
+                user_lang: "ko" // Default to Korean
+            })
+            alert("Registration successful! Please login.")
+            router.push("/login")
+            return true
         } catch (error) {
-            console.error("Registration failed", error)
-            alert("Registration failed. Please try again.")
+            console.error("Registration failed", error);
+            alert("Registration Failed: " + (error as Error).message)
+            return false
+        } finally {
+            setIsLoading(false)
         }
     }
 
     const logout = () => {
         localStorage.removeItem("knu_mla_user")
+        localStorage.removeItem("knu_mla_token")
         setUser(null)
         router.push("/login")
     }
 
-    const updateUser = (data: Partial<User>) => {
+
+
+    const updateUser = async (data: Partial<User>) => {
         if (user) {
-            const updatedUser = { ...user, ...data }
-            localStorage.setItem("knu_mla_user", JSON.stringify(updatedUser))
-            setUser(updatedUser)
+            try {
+                // Optimistic update
+                const updatedUser = { ...user, ...data }
+                setUser(updatedUser)
+                localStorage.setItem("knu_mla_user", JSON.stringify(updatedUser))
+
+                // Persist to backend
+                await api.updateProfile(data);
+            } catch (e) {
+                console.error("Failed to update profile", e);
+                // Revert on failure? Or just log. For now just log.
+            }
         }
     }
 

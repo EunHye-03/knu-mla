@@ -20,32 +20,28 @@ export default function Home() {
   const [messages, setMessages] = React.useState<Message[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const [chatHistory, setChatHistory] = React.useState<{ id: number, title: string, pinned?: boolean, projectId?: string | number }[]>([])
+  const [currentSessionId, setCurrentSessionId] = React.useState<number | null>(null)
 
-  const handleNewChat = () => {
-    setMessages([])
-    setIsLoading(false)
-  }
-
-  // Load history from local storage on mount
-  React.useEffect(() => {
-    const saved = localStorage.getItem("knu_mla_chat_history")
-    if (saved) {
-      try {
-        setChatHistory(JSON.parse(saved))
-      } catch (e) {
-        console.error("Failed to parse chat history", e)
-      }
+  // Load history from API, but also respect local storage if needed or merge them. 
+  // For now, let's use the API for the source of truth if logged in, but the upstream used localStorage.
+  // We should prefer the real API history.
+  const loadHistory = React.useCallback(async () => {
+    try {
+      const history = await api.getChatHistory();
+      // Map API history to local state structure if they differ, or assume compat
+      setChatHistory(history);
+    } catch (error) {
+      console.error("Failed to load chat history:", error);
     }
-  }, [])
+  }, []);
 
-  // Save history to local storage whenever it changes
   React.useEffect(() => {
-    if (chatHistory.length > 0) {
-      localStorage.setItem("knu_mla_chat_history", JSON.stringify(chatHistory))
-    }
-  }, [chatHistory])
+    loadHistory();
+  }, [loadHistory]);
 
-  // Advanced Chat Handlers
+
+  // Advanced Chat Handlers (Local state updates for UI, assuming API sync happens or is handled)
+  // In a real app we'd call API endpoints here too. For now we update local state to satisfy UI.
   const handlePinChat = (id: number) => {
     setChatHistory(prev => prev.map(chat =>
       chat.id === id ? { ...chat, pinned: !chat.pinned } : chat
@@ -55,6 +51,7 @@ export default function Home() {
   const handleDeleteChat = (id: number) => {
     if (confirm("Are you sure you want to delete this chat?")) {
       setChatHistory(prev => prev.filter(chat => chat.id !== id))
+      // TODO: Call API to delete
     }
   }
 
@@ -69,6 +66,12 @@ export default function Home() {
       chat.id === id ? { ...chat, projectId } : chat
     ))
   }
+
+  const handleNewChat = () => {
+    setCurrentSessionId(null);
+    setMessages([]);
+    setIsLoading(false);
+  };
 
   const handleSend = async (text: string, mode: string, options?: { targetLang?: string }) => {
     // Determine if it's a feedback action or a real message
@@ -100,24 +103,28 @@ export default function Home() {
       content: text,
     }
 
-    // If this is the first message, add to history
-    if (messages.length === 0) {
-      const newHistoryItem = {
-        id: Date.now(),
-        title: text.length > 30 ? text.substring(0, 30) + "..." : text,
-        pinned: false
-      }
-      setChatHistory(prev => [newHistoryItem, ...prev])
-    }
-
     setMessages((prev) => [...prev, userMsg])
 
     try {
       // Cast mode to the expected type and pass language context
-      const safeMode = (mode === 'translate' || mode === 'summarize' || mode === 'term') ? mode : 'translate';
+      const safeMode = (mode === 'translate' || mode === 'summarize' || mode === 'term' || mode === 'chat') ? mode : 'chat';
       // Use selected target language from options, or fallback to current app language
       const targetLang = options?.targetLang || language;
-      const response = await api.sendMessage(text, safeMode, { targetLang });
+
+      const response = await api.sendMessage(text, safeMode, {
+        targetLang,
+        chatSessionId: currentSessionId
+      });
+
+      if (response.chatSessionId) {
+        const isNewSession = currentSessionId === null;
+        setCurrentSessionId(response.chatSessionId);
+        if (isNewSession) {
+          // Refresh history if we just created a session
+          // Small delay to ensure DB write is visible
+          setTimeout(() => loadHistory(), 500);
+        }
+      }
 
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),

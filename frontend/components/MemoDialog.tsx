@@ -41,9 +41,6 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
     }
 
 
-
-
-
     if (!open) return null
 
     return (

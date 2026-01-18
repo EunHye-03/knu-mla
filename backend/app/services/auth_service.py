@@ -53,10 +53,10 @@ def authenticate_user(db: Session, *, user_id: str, password: str) -> User:
     user = get_user_by_id(db, user_id, only_active=True)
     
     if not user or not verify_password(password, user.password_hash):
-        raise AppError(error_code=ErrorCode.INVALID_CREDENTIALS)
+        raise AppError(error_code=ErrorCode.INVALID_CREDENTIALS, message="Invalid ID or password.")
     
     if hasattr(user, "is_active") and not user.is_active:
-        raise AppError(error_code=ErrorCode.ACCOUNT_INACTIVE)
+        raise AppError(error_code=ErrorCode.ACCOUNT_INACTIVE, message="Account is inactive.")
 
     return user
 

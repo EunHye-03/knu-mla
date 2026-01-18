@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useAuth } from "@/components/auth-provider"
 import { useTheme } from "next-themes"
+import { api } from "@/services/api"
 import { useLanguage } from "@/components/layout/language-context"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -40,8 +41,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         if (deleteConfirm === "DELETE") {
             setIsDeleting(true)
             try {
-                await import("@/services/api").then(m => m.api.deleteAccount())
-                alert(t.account_deleted)
+                // Use the real API service
+                await api.deleteAccount()
+                alert(t.account_deleted || "Account deleted successfully.")
                 logout()
             } catch (error) {
                 console.error("Delete account failed", error)

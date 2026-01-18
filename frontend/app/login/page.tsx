@@ -11,7 +11,7 @@ import { useAuth } from "@/components/auth-provider"
 import { useLanguage } from "@/components/layout/language-context"
 
 export default function LoginPage() {
-    const { login } = useAuth()
+    const { login, isLoading } = useAuth()
     const { t, language, setLanguage } = useLanguage()
     const [id, setId] = React.useState("")
     const [password, setPassword] = React.useState("")
@@ -91,8 +91,14 @@ export default function LoginPage() {
                                 </Link>
                             </div>
                         </div>
-                        <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
-                            {t.login_button} <ArrowRight className="ml-2 h-4 w-4" />
+                        <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
+                            {isLoading ? (
+                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            ) : (
+                                <>
+                                    {t.login_button} <ArrowRight className="ml-2 h-4 w-4" />
+                                </>
+                            )}
                         </Button>
                     </CardContent>
                 </form>

@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta, timezone
 import os
 
+import bcrypt
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from dotenv import load_dotenv
 load_dotenv()
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
@@ -36,8 +34,10 @@ def _normalize_password(password: str) -> str:
 
 
 def hash_password(password: str) -> str:
-    pw_str = str(password)
-    return pwd_context.hash(pw_str)
+    pw = _normalize_password(password)
+    # bcrypt requires bytes
+    hashed = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
@@ -45,7 +45,7 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
     pw = _normalize_password(password)
     try:
-        return pwd_context.verify(pw, password_hash)
+        return bcrypt.checkpw(pw.encode("utf-8"), password_hash.encode("utf-8"))
     except Exception:
         return False
 

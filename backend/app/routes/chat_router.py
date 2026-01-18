@@ -431,6 +431,21 @@ def get_recent_sessions(
         raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR)
 
 
+@router.get("", response_model=ChatSessionSearchResponse)
+def get_chat_history_alias(
+    req: Request,
+    limit: int | None = Query(default=20, ge=1, le=100),
+    offset: int | None = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Frontend api.getChatHistory calls GET /chat
+    Alias to recent sessions.
+    """
+    return get_recent_sessions(req, limit, offset, db, current_user)
+
+
 # 세션 제목 검색
 @router.get("/sessions/search", response_model=ChatSessionSearchResponse)
 def search_sessions(
@@ -561,8 +576,3 @@ def patch_title(
             extra={"chat_session_id": payload.chat_session_id},
         )
         raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR)
-
-
-
-
-

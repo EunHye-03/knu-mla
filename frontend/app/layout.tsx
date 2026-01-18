@@ -4,7 +4,6 @@ import "./globals.css";
 import { LanguageProvider } from "@/components/layout/language-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
-
 import { BackgroundProvider } from "@/components/layout/background-provider";
 
 const geistSans = Geist({

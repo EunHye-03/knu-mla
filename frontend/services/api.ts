@@ -1,21 +1,42 @@
-// ChatResponse interface is defined below
-// Actually, earlier it was defined in the file. I will keep it there or improve it.
 
 export interface ChatResponse {
     role: "ai" | "user";
     content: string;
     audioUrl?: string; // For potential TTS
+    chatSessionId?: number;
 }
 
 const API_BASE_URL = '/api';
 
 class ApiService {
+    private getToken(): string | null {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('knu_mla_token');
+        }
+        return null;
+    }
+
+    private mapLanguageCode(lang: string): string {
+        const normalized = lang.trim().toLowerCase();
+        if (['ko', 'kr'].includes(normalized)) return 'ko';
+        if (['en'].includes(normalized)) return 'en';
+        if (['uz'].includes(normalized)) return 'uz';
+
+        console.warn(`Unexpected language code: "${lang}". Defaulting to 'en'.`);
+        return 'en';
+    }
+
     async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const url = `${API_BASE_URL}${endpoint}`;
-        const headers = {
+        const token = this.getToken();
+        const headers: any = {
             'Content-Type': 'application/json',
             ...options.headers,
         };
+
+        if (token && !headers['Authorization']) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
 
         try {
             const response = await fetch(url, {
@@ -24,8 +45,37 @@ class ApiService {
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new Event('auth-error'));
+                    }
+                }
+
+
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `API Error: ${response.statusText}`);
+                let msg = errorData.message || `API Error: ${response.statusText}`;
+
+                if (errorData.detail) {
+                    if (Array.isArray(errorData.detail) && errorData.detail.length > 0 && errorData.detail[0].msg) {
+                        msg = errorData.detail.map((err: any) => err.msg).join('\n');
+                    } else if (typeof errorData.detail === 'object' && errorData.detail.errors && Array.isArray(errorData.detail.errors)) {
+                        msg = errorData.detail.errors.map((err: any) => err.msg).join('\n');
+                    } else if (typeof errorData.detail === 'string') {
+                        msg = `${msg}\n${errorData.detail}`;
+                    } else if (typeof errorData.detail === 'object' && Object.keys(errorData.detail).length > 0) {
+                        // Don't overwrite msg with JSON detail if msg is already set (unless it's the generic fallback)
+                        if (msg.startsWith("API Error:")) {
+                            msg = JSON.stringify(errorData.detail);
+                        }
+                        // Otherwise (if we have a specific message like "ValueError..."), keep it.
+                    }
+                }
+
+                throw new Error(msg);
+            }
+
+            if (response.status === 204) {
+                return {} as T;
             }
 
             return await response.json();
@@ -35,34 +85,119 @@ class ApiService {
         }
     }
 
-    async translate(text: string, targetLang: string): Promise<ChatResponse> {
-        return this.request<ChatResponse>('/chat/translate', {
+    async login(userId: string, password: string): Promise<{ access_token: string, token_type: string }> {
+        return this.request<{ access_token: string, token_type: string }>('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ text, target_lang: targetLang }),
+            body: JSON.stringify({ user_id: userId, password }),
         });
     }
 
-    async summarize(text: string): Promise<ChatResponse> {
-        return this.request<ChatResponse>('/chat/summarize', {
+    async register(data: { user_id: string; nickname: string; password: string; email: string; user_lang: string }): Promise<any> {
+        return this.request<any>('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({
+                ...data,
+                user_lang: this.mapLanguageCode(data.user_lang)
+            }),
+        });
+    }
+
+    async getMe(): Promise<any> {
+        return this.request<any>('/auth/me', {
+            method: 'GET'
+        });
+    }
+
+    async findId(email: string): Promise<string> {
+        return this.request<string>('/auth/find-id', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    }
+
+    async resetPassword(userId: string, email: string, newPassword: string): Promise<void> {
+        return this.request<void>('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ user_id: userId, email, new_password: newPassword }),
+        });
+    }
+
+    async deleteAccount(): Promise<void> {
+        return this.request<void>('/auth/delete-account', {
+            method: 'DELETE',
+        });
+    }
+
+    async translate(text: string, targetLang: string, chatSessionId?: number): Promise<ChatResponse> {
+        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+        const res = await this.request<any>(`/translate${queryString}`, {
+            method: 'POST',
+            body: JSON.stringify({ text, target_lang: this.mapLanguageCode(targetLang) }),
+        });
+
+        return {
+            role: 'ai',
+            content: res.data?.translated_text || "",
+            chatSessionId: res.data?.chat_session_id
+        };
+    }
+
+    async summarize(text: string, chatSessionId?: number): Promise<ChatResponse> {
+        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+        const res = await this.request<any>(`/summarize${queryString}`, {
             method: 'POST',
             body: JSON.stringify({ text }),
         });
+
+        return {
+            role: 'ai',
+            content: res.data?.summarized_text || "",
+            chatSessionId: res.data?.chat_session_id
+        };
     }
 
-    async explainTerm(term: string): Promise<ChatResponse> {
-        return this.request<ChatResponse>('/chat/explain', {
+    async explainTerm(term: string, chatSessionId?: number): Promise<ChatResponse> {
+        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+        const res = await this.request<any>(`/term/explain${queryString}`, {
             method: 'POST',
-            body: JSON.stringify({ term }),
+            body: JSON.stringify({ term, target_lang: 'en' }),
         });
+
+        return {
+            role: 'ai',
+            content: `${res.data?.translated_term}\n\n${res.data?.translated_explanation}` || "",
+            chatSessionId: res.data?.chat_session_id
+        };
+    }
+
+    async chat(message: string, chatSessionId?: number): Promise<ChatResponse> {
+        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+        const res = await this.request<any>(`/chat/message${queryString}`, {
+            method: 'POST',
+            body: JSON.stringify({ message }),
+        });
+
+        return {
+            role: 'ai',
+            content: res.data?.response || "",
+            chatSessionId: res.data?.chat_session_id
+        };
     }
 
     async voiceToText(audioBlob: Blob): Promise<{ text: string }> {
         const formData = new FormData();
         formData.append('file', audioBlob, 'voice_message.webm');
 
-        const response = await fetch(`${API_BASE_URL}/audio/stt`, {
+        // Note: Content-Type header should NOT be set manually for FormData, fetch handles it
+        const url = `${API_BASE_URL}/audio/stt`;
+        const token = this.getToken();
+        const headers: any = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch(url, {
             method: 'POST',
             body: formData,
+            headers
         });
 
         if (!response.ok) throw new Error('Voice transcription failed');
@@ -73,41 +208,77 @@ class ApiService {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/files/upload`, {
+        const url = `${API_BASE_URL}/files/upload`;
+        const token = this.getToken();
+        const headers: any = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch(url, {
             method: 'POST',
             body: formData,
+            headers
         });
 
         if (!response.ok) throw new Error('File upload failed');
         return await response.json();
     }
 
+    async updateProfile(data: Partial<{ nickname: string, email: string, user_lang: string, profile_image_url: string, background_image_url: string, is_dark_mode: boolean }>): Promise<any> {
+        const payload: any = { ...data };
+        if (payload.user_lang) {
+            payload.user_lang = this.mapLanguageCode(payload.user_lang);
+        }
+        return this.request<any>('/users/me', {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+    }
+
     // Unified chat method if simpler for the UI to consume
-    async sendMessage(text: string, mode: 'translate' | 'summarize' | 'term', context?: any): Promise<ChatResponse> {
+    async sendMessage(text: string, mode: 'translate' | 'summarize' | 'term' | 'chat', context?: any): Promise<ChatResponse> {
+        const sessionId = context?.chatSessionId;
         switch (mode) {
             case 'translate':
-                // Defaulting to English or getting from context. 
-                // Since context might not be passed purely here, we assume the backend might handle it or we pass a param.
-                // ideally, the UI passes the target language.
-                return this.translate(text, context?.targetLang || 'en');
+                return this.translate(text, context?.targetLang || 'en', sessionId);
             case 'summarize':
-                return this.summarize(text);
+                return this.summarize(text, sessionId);
             case 'term':
-                return this.explainTerm(text);
+                const termTarget = this.mapLanguageCode(context?.targetLang || 'en');
+                const queryString = sessionId ? `?chat_session_id=${sessionId}` : '';
+                const res = await this.request<any>(`/term/explain${queryString}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ term: text, target_lang: termTarget }),
+                });
+                return {
+                    role: 'ai',
+                    content: `${res.data?.translated_term}\n\n${res.data?.translated_explanation}` || "",
+                    chatSessionId: res.data?.chat_session_id
+                };
+            case 'chat':
+                return this.chat(text, sessionId);
             default:
                 throw new Error(`Unsupported mode: ${mode}`);
         }
     }
 
-    // --- Week 4 Features ---
-
-    // Auth
-    async signupWithEmail(data: any): Promise<any> {
-        return this.request('/auth/signup', {
-            method: 'POST',
-            body: JSON.stringify(data),
+    async getChatHistory(): Promise<{ id: number, title: string }[]> {
+        // Using GET /chat for recent sessions
+        const response = await this.request<any>('/chat', {
+            method: 'GET'
         });
+
+        if (response.success && response.data && Array.isArray(response.data.results)) {
+            return response.data.results.map((item: any) => ({
+                id: item.chat_session_id,
+                title: item.title
+            }));
+        }
+        return [];
     }
+
+    // --- New Features from Upstream (Merged) ---
+
+    // Note: Upstream signup is not used, as we use register()
 
     async requestPasswordReset(email: string): Promise<any> {
         return this.request('/auth/forgot-password', {
@@ -116,18 +287,11 @@ class ApiService {
         });
     }
 
-    async resetPassword(data: any): Promise<any> {
-        return this.request('/auth/reset-password', {
-            method: 'POST',
-            body: JSON.stringify(data),
-        });
-    }
+    // This overlaps with our resetPassword but has different signature. 
+    // We already have resetPassword(userId, email, newPassword)
+    // Upstream has resetPassword(data). 
+    // We will call this resetPasswordV2 if needed, or assume upstream UI uses the existing one if we don't change callsites.
 
-    async deleteAccount(): Promise<any> {
-        return this.request('/account', {
-            method: 'DELETE',
-        });
-    }
 
     // Memos
     async getMemos(): Promise<any[]> {

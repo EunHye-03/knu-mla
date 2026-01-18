@@ -26,8 +26,8 @@ export default function RegisterPage() {
                 alert(t.signup_email_required || "Invalid email")
                 return
             }
-            if (password.length < 6) {
-                alert("Password must be at least 6 characters")
+            if (password.length < 8) {
+                alert("Password must be at least 8 characters")
                 return
             }
             setIsLoading(true)
@@ -99,6 +99,7 @@ export default function RegisterPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                minLength={8}
                             />
                         </div>
                         <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">

@@ -53,9 +53,6 @@ interface SidebarProps {
 
 export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRenameChat, onMoveChat }: SidebarProps) {
     const { user, logout } = useAuth()
-    // ... existing hook calls ...
-
-
     const { t } = useLanguage()
     const [settingsOpen, setSettingsOpen] = React.useState(false)
     const [projectDialogOpen, setProjectDialogOpen] = React.useState(false)
@@ -195,7 +192,6 @@ export function Sidebar({ history = [], onNewChat, onPinChat, onDeleteChat, onRe
             alert(t.link_copied || "Link copied to clipboard")
         })
     }
-
 
 
 
