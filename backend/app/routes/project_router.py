@@ -23,12 +23,12 @@ def get_user_idx(current_user=Depends(get_current_user)) -> int:
 
 @router.post("", response_model=ProjectOut, status_code=201)
 def create_project(
-    req_http: Request,
+    request: Request,
     data: ProjectCreate,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info("PROJECT_CREATE_REQUEST")
 
@@ -60,11 +60,11 @@ def create_project(
 
 @router.get("", response_model=list[ProjectOut])
 def list_projects(
-    req_http: Request,
+    request: Request,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info("PROJECT_LIST_REQUEST")
 
@@ -88,13 +88,13 @@ def list_projects(
 
 @router.patch("/{project_session_id}", response_model=ProjectOut)
 def update_project(
-    req_http: Request,
+    request: Request,
     project_session_id: int,
     data: ProjectUpdate,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info(
         "PROJECT_UPDATE_REQUEST",
@@ -131,12 +131,12 @@ def update_project(
 
 @router.delete("/{project_session_id}", status_code=204)
 def delete_project(
-    req_http: Request,
+    request: Request,
     project_session_id: int,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info(
         "PROJECT_DELETE_REQUEST",
@@ -171,12 +171,12 @@ def delete_project(
 
 @router.get("/{project_session_id}/chat-sessions", response_model=list[ChatSessionOut])
 def list_project_chat_sessions(
-    req_http: Request,
+    request: Request,
     project_session_id: int,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info(
         "PROJECT_LIST_CHAT_SESSIONS_REQUEST",
@@ -214,13 +214,13 @@ def list_project_chat_sessions(
     response_model=ProjectWithChatSessions,
 )
 def attach_chat_session(
-    req_http: Request,
+    request: Request,
     project_session_id: int,
     chat_session_id: int,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info(
         "PROJECT_ATTACH_CHAT_SESSION_REQUEST",
@@ -264,13 +264,13 @@ def attach_chat_session(
     response_model=ProjectWithChatSessions,
 )
 def detach_chat_session(
-    req_http: Request,
+    request: Request,
     project_session_id: int,
     chat_session_id: int,
     db: Session = Depends(get_db),
     user_idx: int = Depends(get_user_idx),
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info(
         "PROJECT_DETACH_CHAT_SESSION_REQUEST",

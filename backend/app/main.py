@@ -28,8 +28,8 @@ def create_app() -> FastAPI:
 
     if os.getenv("ENV", "dev") == "dev":
         @app.exception_handler(Exception)
-        async def debug_exception_handler(req_http: Request, exc: Exception):
-            request_id = getattr(req_http.state, "request_id", None) or req_http.headers.get("X-Request-ID") or "unknown"
+        async def debug_exception_handler(request: Request, exc: Exception):
+            request_id = getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID") or "unknown"
             return JSONResponse(
                 status_code=500,
                 content={

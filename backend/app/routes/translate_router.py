@@ -31,8 +31,8 @@ def translate(
         "TRANSLATE_REQUEST",
         extra={
             "chat_session_id": chat_session_id,
-            "source_lang": req_http.source_lang,
-            "target_lang": req_http.target_lang,
+            "source_lang": request.source_lang,
+            "target_lang": request.target_lang,
         },
     )
 
