@@ -34,7 +34,7 @@ export default function ResetPasswordPage() {
 
         setIsLoading(true)
         try {
-            await api.resetPassword({ token, password })
+            await api.resetPasswordWithToken(token, password)
             setStatus('success')
             setTimeout(() => {
                 router.push('/login')

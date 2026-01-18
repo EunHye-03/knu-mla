@@ -172,3 +172,4 @@ next-env.d.ts
 # pycache
 __pycache__/
 *.pyc
+.env*.local

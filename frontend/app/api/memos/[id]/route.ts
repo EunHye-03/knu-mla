@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-    console.log(`[Mock API] Deleting memo ${params.id}`);
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    console.log(`[Mock API] Deleting memo ${id}`);
     return NextResponse.json({ success: true });
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-    console.log(`[Mock API] Updating memo ${params.id}`);
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    console.log(`[Mock API] Updating memo ${id}`);
     const body = await request.json();
-    return NextResponse.json({ id: params.id, ...body });
+    return NextResponse.json({ id: id, ...body });
 }
