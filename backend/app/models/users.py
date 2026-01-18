@@ -11,6 +11,29 @@ class User(Base):
     nickname: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
+<<<<<<< HEAD
+=======
+
+    user_lang: Mapped[str] = mapped_column(
+        String(5), nullable=False, server_default="ko"
+    )
+
+    profile_image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    background_image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    is_dark_mode: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable = False,
+        server_default=text("false"),
+    )
+>>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
     
     user_lang: Mapped[str] = mapped_column(String(5), nullable=False, default="ko")
     

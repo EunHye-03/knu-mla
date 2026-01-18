@@ -98,26 +98,22 @@ class TermService:
 
         except openai.RateLimitError as e:
             raise AppError(
-                message="Rate limit exceeded when calling OpenAI API.",
                 error_code=ErrorCode.RATE_LIMITED,
-                status_code=429,
-                detail=str(e),
+                message="Rate limit exceeded when calling OpenAI API.",
+                detail={"reason":str(e)}
             )
 
         except (openai.APIConnectionError, openai.APIStatusError) as e:
             raise AppError(
+                error_code=ErrorCode.SERVICE_UNAVAILABLE,
                 message="Upstream error occurred when calling OpenAI API.",
-                error_code=ErrorCode.UPSTREAM_ERROR,
-                status_code=502,
-                detail=str(e),
+                detail={"reason":str(e)}
             )
             
         except Exception as e:
             raise AppError(
-                message="Internal server error.",
-                error_code=ErrorCode.INTERNAL_ERROR,
-                status_code=500,
-                detail=str(e),
+                error_code=ErrorCode.INTERNAL_SERVER_ERROR,
+                detail={"reason":str(e)}
             )
 
     # ---------- Main Service ----------
@@ -127,8 +123,6 @@ class TermService:
         db: Session,
         request: TermExplainRequest,
     ) -> TermExplainResponse:
-
-        request_id = str(uuid.uuid4())
 
         term_row = self.find_term_by_name(db, request.term)
         if not term_row:
@@ -156,7 +150,10 @@ class TermService:
             text=request.term,
             source_lang="ko",
             target_lang=target_lang,
-        )
+        )            
+        
+        if translated_term_raw is None:
+            raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, message="translated term explain failed")
 
         if target_lang == "ko":
             translated_explanation_raw = explanation_text
@@ -169,9 +166,13 @@ class TermService:
         
         translated_term = self._to_text(translated_term_raw)
         translated_explanation = self._to_text(translated_explanation_raw)
+    
+        if translated_explanation_raw is None:
+            raise AppError(error_code=ErrorCode.INTERNAL_SERVER_ERROR, message="translated explanation failed")
+
         
         return TermExplainResponse(
-            request_id=request_id,
+            request_id=None,
             success=True,
             data=TermExplainData(
                 term=request.term,

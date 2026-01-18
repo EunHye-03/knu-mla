@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.users import User
+from app.exceptions.error import AppError, ErrorCode
 from app.core.security import decode_token
 from app.services.user_service import get_user_by_idx
 
@@ -15,28 +16,28 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if credentials is None:
-        raise HTTPException(status_code=401, detail="NOT_AUTHENTICATED")
+        raise AppError(error_code=ErrorCode.UNAUTHORIZED, message="Not authenticated")
 
     token = credentials.credentials  # "Bearer <token>"에서 <token> 부분
 
     user_idx = decode_token(token)
     if not user_idx:
-        raise HTTPException(
-            status_code=401,
-            detail="INVALID_TOKEN",
+        raise AppError(
+            error_code=ErrorCode.INVALID_TOKEN,
+            message="invalid token"
         )
 
     user = get_user_by_idx(db, int(user_idx))
     if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="USER_NOT_FOUND",
+        raise AppError(
+            error_code=ErrorCode.USER_NOT_FOUND,
+            message="user not found"
         )
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=401,
-            detail="USER_DEACTIVATED",
+        raise AppError(
+            error_code=ErrorCode.ACCOUNT_INACTIVE,
+            message="user deactivated"
         )
 
     

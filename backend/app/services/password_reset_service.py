@@ -167,13 +167,13 @@ def verify_reset_token(
     row = _get_token_row_by_hash(db, token_hash)
 
     if not row:
-        raise AppError(message="Invalid reset token.", error_code=ErrorCode.INVALID_TOKEN)
+        raise AppError(error_code=ErrorCode.INVALID_TOKEN, message="Invalid reset token.")
 
     if row.used_at is not None:
-        raise AppError(message="Reset token already used.", error_code=ErrorCode.TOKEN_ALREADY_USED)
+        raise AppError(error_code=ErrorCode.TOKEN_ALREADY_USED, message="Reset token already used.")
 
     if _is_expired(row.expires_at):
-        raise AppError(message="Reset token expired.", error_code=ErrorCode.TOKEN_EXPIRED)
+        raise AppError(error_code=ErrorCode.TOKEN_EXPIRED, message="Reset token expired.")
 
     return row
 
@@ -201,7 +201,7 @@ def reset_password_with_token(
     )
     user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
-        raise AppError(message="User not found.", error_code=ErrorCode.USER_NOT_FOUND)
+        raise AppError(error_code=ErrorCode.USER_NOT_FOUND, message="User not found.")
     
     # 비밀번호 해시 갱신
     user.password_hash = hash_password_fn(new_password)

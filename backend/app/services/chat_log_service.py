@@ -42,7 +42,10 @@ def save_chat_messages(
         else:
             session = get_chat_session(db, chat_session_id)
             if not session:
-                raise AppError(ErrorCode.NOT_FOUND)
+                raise AppError(
+                    error_code=ErrorCode.CHAT_SESSION_NOT_FOUND,
+                    message="Chat session not found",
+                )  
 
         # 2) user 메시지
         create_message(

@@ -265,6 +265,66 @@ class ApiService {
         }
         return [];
     }
+
+    // --- New Features from Upstream (Merged) ---
+
+    // Note: Upstream signup is not used, as we use register()
+
+    async requestPasswordReset(email: string): Promise<any> {
+        return this.request('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    }
+
+    // This overlaps with our resetPassword but has different signature. 
+    // We already have resetPassword(userId, email, newPassword)
+    // Upstream has resetPassword(data). 
+    // We will call this resetPasswordV2 if needed, or assume upstream UI uses the existing one if we don't change callsites.
+
+
+    // Memos
+    async getMemos(): Promise<any[]> {
+        return this.request('/memos');
+    }
+
+    async updateMemo(id: string, data: any): Promise<any> {
+        return this.request(`/memos/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteMemo(id: string): Promise<any> {
+        return this.request(`/memos/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Projects
+    async createProject(data: any): Promise<any> {
+        return this.request('/projects', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getProjects(): Promise<any[]> {
+        return this.request('/projects');
+    }
+
+    async updateProject(id: string, data: any): Promise<any> {
+        return this.request(`/projects/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteProject(id: number): Promise<any> {
+        return this.request(`/projects/${id}`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 export const api = new ApiService();

@@ -1,54 +1,148 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Optional, Dict
-
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel
+from typing import Any, Optional
 
 
 class ErrorCode(str, Enum):
     # 400
-    EMPTY_INPUT = "EMPTY_INPUT"
-    INVALID_INPUT = "INVALID_INPUT"
+    INVALID_REQUEST = "INVALID_REQUEST"
+    SAME_PASSWORD_NOT_ALLOWED = "SAME_PASSWORD_NOT_ALLOWED"
+    SESSION_MISMATCH = "SESSION_MISMATCH"
+    INVALID_USER_LANG = "INVALID_USER_LANG"
+    INVALID_TEXT = "INVALID_TEXT"
     INVALID_TERM = "INVALID_TERM"
-    INVALID_AUDIO = "INVALID_AUDIO"
+    INVALID_PDF = "INVALID_PDF"
+    INVALID_PPTX = "INVALID_PPTX"
     INVALID_TOKEN = "INVALID_TOKEN"
-    UNSUPPORTED_LANG = "UNSUPPORTED_LANG"
-    BAD_REQUEST = "BAD_REQUEST"
+
+    # 401
+    UNAUTHORIZED = "UNAUTHORIZED"
+    INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
+    
+    # 403
+    FORBIDDEN = "FORBIDDEN"
+    ACCOUNT_INACTIVE = "ACCOUNT_INACTIVE"
+    CHAT_SESSION_FORBIDDEN = "CHAT_SESSION_FORBIDDEN"
+    CHAT_MESSAGE_FORBIDDEN = "CHAT_MESSAGE_FORBIDDEN"
+    PROJECT_FORBIDDEN = "PROJECT_FORBIDDEN"
+    MEMO_FORBIDDEN = "MEMO_FORBIDDEN"
 
     # 404
-    NOT_FOUND = "NOT_FOUND"
+    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
     USER_NOT_FOUND = "USER_NOT_FOUND"
+    CHAT_SESSION_NOT_FOUND = "CHAT_SESSION_NOT_FOUND"
+    CHAT_MESSAGE_NOT_FOUND = "CHAT_MESSAGE_NOT_FOUND"
+    FILE_NOT_FOUND = "FILE_NOT_FOUND"
+    PROJECT_NOT_FOUND = "PROJECT_NOT_FOUND"
+    PROJECT_SESSION_NOT_FOUND = "PROJECT_SESSION_NOT_FOUND"
+    MEMO_NOT_FOUND = "MEMO_NOT_FOUND"
+    
+    # 409
+    CONFLICT = "CONFLICT"
+    DUPLICATE_USER_NAME = "DUPLICATE_USER_NAME"
+    DUPLICATE_USER_ID = "DUPLICATE_USER_ID"
+    DUPLICATE_EMAIL = "DUPLICATE_EMAIL"
+    DUPLICATE_PROJECT_NAME = "DUPLICATE_PROJECT_NAME"
+    TOKEN_ALREADY_USED = "TOKEN_ALREADY_USED"
+    TOKEN_EXPIRED = "TOKEN_EXPIRED"
+    ALREADY_EXISTS = "ALREADY_EXISTS"
+    CHAT_SESSION_NOT_ATTACHED_TO_PROJECT = "CHAT_SESSION_NOT_ATTACHED_TO_PROJECT"
+    CHAT_SESSION_PROJECT_MISMATCH = "CHAT_SESSION_PROJECT_MISMATCH"
+
     
     # 413
-    TOO_LONG = "TOO_LONG"
+    INPUT_TOO_LONG = "INPUT_TOO_LONG"
     FILE_TOO_LARGE = "FILE_TOO_LARGE"
-    TEXT_TOO_LONG = "TEXT_TOO_LONG"
-    AUDIO_TOO_LONG = "AUDIO_TOO_LONG"
-    AUDIO_TOO_LARGE = "AUDIO_TOO_LARGE"
 
     # 415
-    UNSUPPORTED_FORMAT = "UNSUPPORTED_FORMAT"
+    UNSUPPORTED_FILE_TYPE = "UNSUPPORTED_FILE_TYPE"
     
+    # 422 (only for file parsing)
+    FILE_PARSE_FAILED = "FILE_PARSE_FAILED"
+
     # 429
     RATE_LIMITED = "RATE_LIMITED"
     
     # 500
-    INTERNAL_ERROR = "INTERNAL_ERROR"
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
     DB_ERROR = "DB_ERROR"
     
     # 502
-    OPENAI_ERROR = "OPENAI_ERROR"
-    UPSTREAM_ERROR = "UPSTREAM_ERROR"
-
-class ErrorResponse(BaseModel):
-    error_code: ErrorCode
-    message: str
-    details: Optional[Dict[str, Any]] = None
+    AI_REQUEST_FAILED = "AI_REQUEST_FAILED"
     
+    # 503
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+
+
+# ErrorCode -> HTTP status
+ERROR_CODE_TO_STATUS: dict[ErrorCode, int] = {
+    # 400
+    ErrorCode.INVALID_REQUEST: 400,
+    ErrorCode.SAME_PASSWORD_NOT_ALLOWED: 400,
+    ErrorCode.SESSION_MISMATCH: 400,
+    ErrorCode.INVALID_USER_LANG: 400,
+    ErrorCode.INVALID_TEXT: 400,
+    ErrorCode.INVALID_TERM: 400,
+    ErrorCode.INVALID_PDF: 400,
+    ErrorCode.INVALID_PPTX: 400,
+    ErrorCode.INVALID_TOKEN: 400,
+
+    # 401
+    ErrorCode.UNAUTHORIZED: 401,
+    ErrorCode.INVALID_CREDENTIALS: 401,
+
+    # 403
+    ErrorCode.FORBIDDEN: 403,
+    ErrorCode.ACCOUNT_INACTIVE: 403,
+    ErrorCode.CHAT_SESSION_FORBIDDEN: 403,
+    ErrorCode.CHAT_MESSAGE_FORBIDDEN: 403,
+    ErrorCode.PROJECT_FORBIDDEN: 403,
+    ErrorCode.MEMO_FORBIDDEN: 403,
+
+    # 404
+    ErrorCode.RESOURCE_NOT_FOUND: 404,
+    ErrorCode.USER_NOT_FOUND: 404,
+    ErrorCode.CHAT_SESSION_NOT_FOUND: 404,
+    ErrorCode.CHAT_MESSAGE_NOT_FOUND: 404,
+    ErrorCode.FILE_NOT_FOUND: 404,
+    ErrorCode.PROJECT_NOT_FOUND: 404,
+    ErrorCode.PROJECT_SESSION_NOT_FOUND: 404,
+    ErrorCode.MEMO_NOT_FOUND: 404,
+
+    # 409
+    ErrorCode.CONFLICT: 409,
+    ErrorCode.DUPLICATE_USER_NAME: 409,
+    ErrorCode.DUPLICATE_USER_ID: 409,
+    ErrorCode.DUPLICATE_EMAIL: 409,
+    ErrorCode.DUPLICATE_PROJECT_NAME: 409,
+    ErrorCode.TOKEN_ALREADY_USED: 409,
+    ErrorCode.TOKEN_EXPIRED: 409,
+    ErrorCode.ALREADY_EXISTS: 409,
+    ErrorCode.CHAT_SESSION_NOT_ATTACHED_TO_PROJECT: 409,
+    ErrorCode.CHAT_SESSION_PROJECT_MISMATCH: 409,
+
+
+    # 413
+    ErrorCode.INPUT_TOO_LONG: 413,
+    ErrorCode.FILE_TOO_LARGE: 413,
+
+    # 415
+    ErrorCode.UNSUPPORTED_FILE_TYPE: 415,
+
+    # 422
+    ErrorCode.FILE_PARSE_FAILED: 422,
+
+    # 429
+    ErrorCode.RATE_LIMITED: 429,
+
+    # 500+
+    ErrorCode.INTERNAL_SERVER_ERROR: 500,
+    ErrorCode.DB_ERROR: 500,
+    ErrorCode.AI_REQUEST_FAILED: 502,
+    ErrorCode.SERVICE_UNAVAILABLE: 503,
+}
+
 class AppError(Exception):
     """
     공통 커스텀 예외
@@ -57,72 +151,17 @@ class AppError(Exception):
     def __init__(
         self,
         *,
-        error_code: ErrorCode | str,
-        message: str,
-        status_code: int,
-        detail: Any | None = None,
+        error_code: ErrorCode,
+        message: str | None = None,
+        detail: Optional[dict[str, Any]] = None,
     ) -> None:
+        super().__init__(message)
         self.error_code = error_code
         self.message = message
-        self.status_code = status_code
-        self.detail = detail
+        self.detail = dict(detail) if detail else {}
+        
+    @property
+    def status_code(self) -> int:
+        return ERROR_CODE_TO_STATUS.get(self.error_code, 500)
+    
 
-
-def _json_error(
-    *,
-    status_code: int,
-    error_code: ErrorCode | str,
-    message: str,
-    detail: Any | None = None,
-) -> JSONResponse:
-    body = ErrorResponse(
-        error_code=error_code,
-        message=message,
-        detail=detail,
-    ).model_dump(exclude_none=True)
-
-    return JSONResponse(
-        status_code=status_code,
-        content=body,
-    )
-
-
-# ---------- Exception Handlers ----------
-
-async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
-    return _json_error(
-        status_code=exc.status_code,
-        error_code=exc.error_code,
-        message=exc.message,
-        detail=exc.detail,
-    )
-
-
-async def validation_error_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
-    """
-    FastAPI/Pydantic 422 → 400으로 변환 (입력 오류)
-    """
-    return _json_error(
-        status_code=400,
-        error_code=ErrorCode.INVALID_INPUT,
-        message="Invalid request input.",
-        detail=exc.errors(),
-    )
-
-
-async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
-    """
-    예상 못한 서버 에러
-    """
-    return _json_error(
-        status_code=500,
-        error_code=ErrorCode.INTERNAL_ERROR,
-        message="Internal server error.",
-        detail={"type": exc.__class__.__name__},
-    )
-
-
-def register_exception_handlers(app) -> None:
-    app.add_exception_handler(AppError, app_error_handler)
-    app.add_exception_handler(RequestValidationError, validation_error_handler)
-    app.add_exception_handler(Exception, unhandled_exception_handler)

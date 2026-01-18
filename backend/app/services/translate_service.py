@@ -29,20 +29,18 @@ def translate_text(
   text: str,
   source_lang: Optional[str | Lang] = None,
   target_lang: str,
-) -> str:
+) -> dict:
     # ------- 입력 검증 ------
     if not text or not text.strip():
         raise AppError(
-            message="Input text is empty.",
-            error_code=ErrorCode.INVALID_INPUT,
-            status_code=422,
+            error_code=ErrorCode.INVALID_TEXT,
+            message="Input text is empty."
         )
     
     if len(text) > MAX_TEXT_LENGTH:
         raise AppError(
-            message=f"Input text is too long. Max {MAX_TEXT_LENGTH} chars.",
-            error_code=ErrorCode.INVALID_INPUT,
-            status_code=422,
+            error_code=ErrorCode.INVALID_TEXT,
+            message=f"Input text is too long. Max {MAX_TEXT_LENGTH} chars."
         )
         
     try:
@@ -52,9 +50,9 @@ def translate_text(
             raise ValueError("target_lang is required.")
     except ValueError:
         raise AppError(
+            error_code=ErrorCode.INVALID_USER_LANG,
             message="lang must be one of: ko, en, uz",
-            error_code=ErrorCode.INVALID_INPUT,
-            status_code=422,
+
         )
         
     src_line = (
@@ -114,33 +112,29 @@ def translate_text(
 
     except json.JSONDecodeError as e:
         raise AppError(
+            error_code=ErrorCode.SERVICE_UNAVAILABLE,
             message="Failed to parse LLM response as JSON.",
-            error_code=ErrorCode.UPSTREAM_ERROR,
-            status_code=502,
-            detail=str(e),
+            detail={"reason":str(e)}
         )
 
     
     except openai.RateLimitError as e:
         raise AppError(
-            message="Rate limit exceeded when calling OpenAI API.",
             error_code=ErrorCode.RATE_LIMITED,
-            status_code=429,
-            detail=str(e),
+            message="Rate limit exceeded when calling OpenAI API.",
+            detail={"reason":str(e)}
         )
 
     except (openai.APIConnectionError, openai.APIStatusError) as e:
         raise AppError(
+            error_code=ErrorCode.SERVICE_UNAVAILABLE,
             message="Upstream error occurred when calling OpenAI API.",
-            error_code=ErrorCode.UPSTREAM_ERROR,
-            status_code=502,
-            detail=str(e),
+            detail={"reason":str(e)}
         )
         
     except Exception as e:
         raise AppError(
+            error_code=ErrorCode.INTERNAL_SERVER_ERROR,
             message="An internal error occurred during translation.",
-            error_code=ErrorCode.INTERNAL_ERROR,
-            status_code=500,
-            detail=str(e),
+            detail={"reason":str(e)}
         )

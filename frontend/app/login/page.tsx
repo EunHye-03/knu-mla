@@ -11,7 +11,11 @@ import { useAuth } from "@/components/auth-provider"
 import { useLanguage } from "@/components/layout/language-context"
 
 export default function LoginPage() {
+<<<<<<< HEAD
     const { login, isLoading } = useAuth()
+=======
+    const { login } = useAuth()
+>>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
     const { t, language, setLanguage } = useLanguage()
     const [id, setId] = React.useState("")
     const [password, setPassword] = React.useState("")
@@ -71,7 +75,13 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2 group">
+<<<<<<< HEAD
                             <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.password_label}</label>
+=======
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.password_label}</label>
+                            </div>
+>>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                             <Input
                                 type="password"
                                 placeholder="••••••••"
@@ -80,6 +90,7 @@ export default function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
+<<<<<<< HEAD
                         </div>
                         <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading}>
                             {isLoading ? (
@@ -95,6 +106,20 @@ export default function LoginPage() {
                                 Forgot ID or Password?
                             </Link>
                         </div>
+=======
+                            <div className="flex justify-end">
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-xs text-red-600 hover:text-red-700 hover:underline font-medium"
+                                >
+                                    {t.forgot_password}
+                                </Link>
+                            </div>
+                        </div>
+                        <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
+                            {t.login_button} <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+>>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                     </CardContent>
                 </form>
                 <CardFooter className="flex flex-col space-y-4 pt-2">
