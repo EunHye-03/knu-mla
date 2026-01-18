@@ -24,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 # 비밀번호 재설정 메일 요청
 # -------------------------
 
-@router.post("/forgot")
+@router.post("/forgot-password")
 def forgot_password(
     request: Request,
     req: PasswordResetRequest,
@@ -69,7 +69,7 @@ def forgot_password(
 # 토큰으로 비밀번호 재설정
 # -------------------------
 
-@router.post("/reset")
+@router.post("/reset-password")
 def reset_password(
     req_http: Request,
     req: PasswordResetConfirm,

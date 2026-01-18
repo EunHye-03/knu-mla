@@ -34,7 +34,12 @@ def save_chat_messages(
 
         # 1) 세션 없으면 생성
         if chat_session_id is None:
-            session = ChatSession(user_idx=user_idx, title=None)
+            # Get user's preferred language
+            from app.models.users import User
+            user = db.query(User).filter(User.user_idx == user_idx).first()
+            user_lang = user.user_lang if user and user.user_lang else "en"
+            
+            session = ChatSession(user_idx=user_idx, title=None, user_lang=user_lang)
             db.add(session)
             db.flush()          # chat_session_id 확보
             db.refresh(session)
@@ -77,16 +82,24 @@ def save_chat_messages(
             ),
         )
         
-        # 4) 제목 자동 설정 (딱 1번)
-        auto_set_chat_title_if_empty(db, chat_session_id=chat_session_id)
+        # 4) 제목 자동 설정 (딱 1번) - 삭제 (트랜잭션 밖으로 이동)
+        # auto_set_chat_title_if_empty(db, chat_session_id=chat_session_id)
     
         # with db.begin() 블록을 정상 통과하면 자동 commit
         return chat_session_id
 
     # ✅ 이미 트랜잭션이 시작된 세션이면 begin()을 또 하지 말기
     if db.in_transaction():
-        return _work()
-
-    # ✅ 트랜잭션이 없을 때만 begin으로 원자성 보장
-    with db.begin():
-        return _work()
+        session_id = _work()
+    else:
+        # ✅ 트랜잭션이 없을 때만 begin으로 원자성 보장
+        with db.begin():
+            session_id = _work()
+    
+    # 4) 제목 자동 설정 (트랜잭션 밖에서, 메시지가 commit된 후)
+    try:
+        auto_set_chat_title_if_empty(db, chat_session_id=session_id)
+    except Exception:
+        pass
+        
+    return session_id
