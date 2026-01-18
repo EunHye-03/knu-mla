@@ -18,13 +18,13 @@ router = APIRouter(prefix="", tags=["PDF"])
 
 @router.post("/summarize/pdf")
 def summarize_pdf(
-    req_http: Request,
+    request: Request,
     file: UploadFile = File(...),
     chat_session_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
     
     # Request
     log.info(
@@ -76,7 +76,7 @@ def summarize_pdf(
             feature_type="pdf_summarize",
             user_content=f"[pdf] {file.filename}",
             assistant_content=summarized,
-            request_id=getattr(req_http.state, "request_id", None),
+            request_id=getattr(request.state, "request_id", None),
         )
         log.info("PDF_SUMMARIZE_CHAT_SAVE_SUCCESS")
     except SQLAlchemyError:
@@ -85,7 +85,7 @@ def summarize_pdf(
         log.exception("PDF_SUMMARIZE_CHAT_SAVE_INTERNAL_ERROR")
         
     return {
-        "request_id": getattr(req_http.state, "request_id", None),
+        "request_id": getattr(request.state, "request_id", None),
         "success": True,
         "data": {"summarized_text": summarized},
     }
@@ -93,7 +93,7 @@ def summarize_pdf(
 
 @router.post("/translate/pdf")
 def translate_pdf(
-    req_http: Request,
+    request: Request,
     file: UploadFile = File(...),
     target_lang: str = Form(...),
     source_lang: Optional[str] = Form(None),
@@ -101,7 +101,7 @@ def translate_pdf(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     # request
     log.info(
@@ -163,7 +163,7 @@ def translate_pdf(
             feature_type="pdf_translate",
             user_content=f"[pdf] {file.filename}",
             assistant_content=translated_text,
-            request_id=getattr(req_http.state, "request_id", None),
+            request_id=getattr(request.state, "request_id", None),
             source_lang=(source_lang if source_lang and source_lang != "auto" else None),
             target_lang=target_lang,
         )
@@ -174,7 +174,7 @@ def translate_pdf(
         log.exception("PDF_TRANSLATE_CHAT_SAVE_INTERNAL_ERROR")
 
     return {
-        "request_id": getattr(req_http.state, "request_id", None),
+        "request_id": getattr(request.state, "request_id", None),
         "success": True,
         "data": {"translated_text": translated_text},
     }

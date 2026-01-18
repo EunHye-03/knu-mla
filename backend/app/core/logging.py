@@ -24,7 +24,7 @@ def setup_logging() -> None:
         h.addFilter(f)
 
 
-def get_logger(req_http: Request) -> logging.LoggerAdapter:
-    request_id = getattr(req_http.state, "request_id", None)
-    user_idx = getattr(req_http.state, "user_idx", None)
+def get_logger(request: Request) -> logging.LoggerAdapter:
+    request_id = getattr(request.state, "request_id", None)
+    user_idx = getattr(request.state, "user_idx", None)
     return logging.LoggerAdapter(_base_logger, {"request_id": request_id, "user_idx": user_idx})

@@ -14,15 +14,15 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/me", response_model=UserMe)
-def get_me(req_http: Request, current_user: User = Depends(get_current_user)):
-    logger = get_logger(req_http)
+def get_me(request: Request, current_user: User = Depends(get_current_user)):
+    logger = get_logger(request)
     logger.info("USER_ME_REQUEST")
     logger.info("USER_ME_SUCCESS")
     return current_user
 
 @router.patch("/me", response_model=UserMe)
 def update_info(
-    req_http: Request,
+    request: Request,
     req: UserMeUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -37,7 +37,7 @@ def update_info(
     - background_image_url
     - is_dark_mode
     """
-    logger = get_logger(req_http)
+    logger = get_logger(request)
     logger.info("USER_UPDATE_REQUEST")
 
     try:
@@ -70,12 +70,12 @@ def update_info(
   
 @router.patch("/password")
 def update_password(
-    req_http: Request,
+    request: Request,
     req: UserPasswordUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    logger = get_logger(req_http)
+    logger = get_logger(request)
     logger.info("USER_PASSWORD_UPDATE_REQUEST")
 
     try:
@@ -104,12 +104,12 @@ def update_password(
 
 @router.delete("/withdraw", response_model=UserWithdrawResponse)
 def withdraw_me(
-    req_http: Request,
+    request: Request,
     req: UserWithdrawRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    logger = get_logger(req_http)
+    logger = get_logger(request)
     logger.info("USER_WITHDRAW_REQUEST")
 
     try:
@@ -117,7 +117,7 @@ def withdraw_me(
 
         logger.info("USER_WITHDRAW_SUCCESS")
         return {
-            "request_id": req_http.state.request_id,
+            "request_id": request.state.request_id,
             "success": True,
         }
 

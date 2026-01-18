@@ -17,13 +17,13 @@ router = APIRouter(prefix="/summarize", tags=["Summarize"])
 
 @router.post("", response_model=SummarizeResponse)
 def summarize(
-    req_http: Request,
+    request: Request,
     req: SummarizeRequest,
     chat_session_id: int | None = None,  # ✅ 프론트 연동용
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> SummarizeResponse:
-    log = get_logger(req_http)
+    log = get_logger(request)
     
     # 기능
     log.info(
@@ -54,7 +54,7 @@ def summarize(
             feature_type=FeatureType.summarize,
             user_content=req.text,
             assistant_content=summarized_text,
-            request_id=req_http.state.request_id,
+            request_id=request.state.request_id,
         )
         log.info("SUMMARIZE_CHAT_SAVE_SUCCESS")
 
@@ -64,7 +64,7 @@ def summarize(
         log.exception("SUMMARIZE_CHAT_SAVE_INTERNAL_ERROR")
 
     return SummarizeResponse(
-        request_id=req_http.state.request_id,
+        request_id=request.state.request_id,
         success=True,
         data=SummarizeData(
             summarized_text=summarized_text

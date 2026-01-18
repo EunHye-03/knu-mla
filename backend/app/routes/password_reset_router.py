@@ -26,7 +26,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/forgot")
 def forgot_password(
-    req_http: Request,
+    request: Request,
     req: PasswordResetRequest,
     db: Session = Depends(get_db),
 ):
@@ -34,7 +34,7 @@ def forgot_password(
     비밀번호 재설정 메일 요청
     - 보안상 이메일 존재 여부와 무관하게 항상 success=true
     """
-    log = get_logger(req_http)
+    log = get_logger(request)
 
     log.info("AUTH_PASSWORD_RESET_REQUEST")
 
