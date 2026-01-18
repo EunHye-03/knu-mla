@@ -8,8 +8,8 @@ from app.core.security import decode_token
 
 logger = logging.getLogger("app")
 
-def _extract_bearer_token(request: Request) -> str | None:
-    auth = request.headers.get("Authorization")
+def _extract_bearer_token(req_http: Request) -> str | None:
+    auth = req_http.headers.get("Authorization")
     if not auth:
         return None
     prefix = "Bearer "
@@ -20,45 +20,45 @@ def _extract_bearer_token(request: Request) -> str | None:
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next) -> Response:
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
-        request.state.request_id = request_id
-        request.state.user_idx = None
+    async def dispatch(self, req_http: Request, call_next) -> Response:
+        request_id = req_http.headers.get("X-Request-ID") or str(uuid.uuid4())
+        req_http.state.request_id = request_id
+        req_http.state.user_idx = None
 
         start = time.perf_counter()
 
 
-        token = _extract_bearer_token(request)
+        token = _extract_bearer_token(req_http)
         if token:
             try:
                 payload = decode_token(token)  # dict 기대
                 sub = payload.get("sub")
                 if sub is not None:
                     try:
-                        request.state.user_idx = int(sub)  # sub가 user_idx인 경우
+                        req_http.state.user_idx = int(sub)  # sub가 user_idx인 경우
                     except (TypeError, ValueError):
-                        request.state.user_idx = None
+                        req_http.state.user_idx = None
             except Exception:
-                request.state.user_idx = None
+                req_http.state.user_idx = None
 
         start = time.perf_counter()
 
         logger.info(
-            f"request_started request_id={request_id} user_idx={request.state.user_idx} "
-            f"method={request.method} path={request.url.path}"
+            f"request_started request_id={request_id} user_idx={req_http.state.user_idx} "
+            f"method={req_http.method} path={req_http.url.path}"
         )
 
         response: Response | None = None
         try:
-            response = await call_next(request)
+            response = await call_next(req_http)
             return response
         finally:
             elapsed_ms = int((time.perf_counter() - start) * 1000)
             status_code = response.status_code if response else 500
 
             logger.info(
-                f"request_completed request_id={request_id} user_idx={request.state.user_idx} "
-                f"method={request.method} path={request.url.path} status={status_code} latency_ms={elapsed_ms}"
+                f"request_completed request_id={request_id} user_idx={req_http.state.user_idx} "
+                f"method={req_http.method} path={req_http.url.path} status={status_code} latency_ms={elapsed_ms}"
             )
 
             if response:

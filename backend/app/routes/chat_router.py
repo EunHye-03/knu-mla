@@ -49,12 +49,12 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 # 채팅 세션 생성
 @router.post("/sessions", response_model=ChatSessionOut)
 def create_session(
-    req: Request,
+    req_http: Request,
     data: ChatSessionCreate, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info("CHAT_CREATE_SESSION_REQUEST")
     
     data.user_idx = current_user.user_idx
@@ -77,12 +77,12 @@ def create_session(
 # 채팅 세션 목록 (user_idx 필수, project_id 옵션)
 @router.get("/sessions", response_model=list[ChatSessionOut])
 def get_sessions(
-    req: Request,
+    req_http: Request,
     project_id: int | None = Query(default=None, ge=1), 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info("CHAT_LIST_SESSIONS_REQUEST", extra={"project_id": project_id})
 
     try:
@@ -106,12 +106,12 @@ def get_sessions(
 # 세션 삭제
 @router.delete("", status_code=204)
 def delete_session(
-    req: Request,
+    req_http: Request,
     chat_session_id: int = Query(..., ge=1),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info(
         "CHAT_DELETE_SESSION_REQUEST",
         extra={"chat_session_id": chat_session_id},
@@ -161,14 +161,14 @@ def delete_session(
 # 메시지 목록
 @router.get("/sessions/messages", response_model=list[ChatMessageOut])
 def get_session_messages(
-    req: Request,
+    req_http: Request,
     chat_session_id: int, 
     limit: int = 50, 
     offset: int = 0, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info(
         "CHAT_LIST_MESSAGES_REQUEST",
         extra={"chat_session_id": chat_session_id, "limit": limit, "offset": offset},
@@ -228,13 +228,13 @@ def get_session_messages(
 # 메시지 생성(수동 저장용)
 @router.post("/sessions/messages", response_model=ChatMessageOut)
 def post_message(
-    req: Request,
+    req_http: Request,
     data: ChatMessageCreate,
     chat_session_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info(
         "CHAT_CREATE_MESSAGE_REQUEST",
         extra={"chat_session_id": chat_session_id},
@@ -313,7 +313,7 @@ def post_message(
 # 메시지 삭제
 @router.delete("/messages/{message_id}", status_code=204)
 def delete_one_message(
-    req: Request,
+    req_http: Request,
     message_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -322,7 +322,7 @@ def delete_one_message(
     DELETE /chat/sessions/messages/{chat_message_id}
     - 메시지 1개만 삭제
     """
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info(
         "CHAT_DELETE_MESSAGE_REQUEST",
         extra={"message_id": message_id},
@@ -373,7 +373,7 @@ def delete_one_message(
 # 최근 세션 목록 (검색창 비었을 때 프론트에서 호출)
 @router.get("/sessions/recent", response_model=ChatSessionSearchResponse)
 def get_recent_sessions(
-    req: Request,
+    req_http: Request,
     limit: int | None = Query(default=20, ge=1, le=100),
     offset: int | None = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -382,7 +382,7 @@ def get_recent_sessions(
     """
     최근 세션 목록 (검색어 없을 때 기본 리스트로 사용)
     """
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info(
         "CHAT_RECENT_SESSIONS_REQUEST",
         extra={"limit": limit, "offset": offset},
@@ -434,7 +434,7 @@ def get_recent_sessions(
 # 세션 제목 검색
 @router.get("/sessions/search", response_model=ChatSessionSearchResponse)
 def search_sessions(
-    req: Request,
+    req_http: Request,
     query: str = Query(..., min_length=1, description="세션 제목 검색어"),
     limit: int | None = Query(default=20, ge=1, le=100),
     offset: int | None = Query(default=0, ge=0),
@@ -444,7 +444,7 @@ def search_sessions(
     """
     세션 제목(title) 기반 검색
     """
-    log = get_logger(req)
+    log = get_logger(req_http)
 
     log.info(
         "CHAT_SEARCH_SESSIONS_REQUEST",
@@ -506,12 +506,12 @@ def search_sessions(
 # 세션 제목 수정
 @router.patch("sessions/title", response_model=ChatSessionTitleUpdateResponse)
 def patch_title(
-    req: Request,
+    req_http: Request,
     payload: ChatSessionTitleUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ChatSessionTitleUpdateResponse:
-    log = get_logger(req)
+    log = get_logger(req_http)
     log.info(
         "CHAT_UPDATE_SESSION_TITLE_REQUEST",
         extra={"chat_session_id": payload.chat_session_id},

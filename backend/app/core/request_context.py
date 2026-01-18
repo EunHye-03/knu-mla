@@ -8,8 +8,8 @@ from starlette.types import ASGIApp
 from app.core.security import decode_access_token  # <- 너희 프로젝트에 맞게 import 수정
 
 
-def _extract_bearer_token(request: Request) -> str | None:
-    auth = request.headers.get("Authorization")
+def _extract_bearer_token(req_http: Request) -> str | None:
+    auth = req_http.headers.get("Authorization")
     if not auth:
         return None
     prefix = "Bearer "
@@ -22,14 +22,14 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):
         super().__init__(app)
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, req_http: Request, call_next):
         # 1) request_id 주입
-        request.state.request_id = str(uuid.uuid4())
+        req_http.state.request_id = str(uuid.uuid4())
 
         # 2) user_idx 주입 (없으면 None)
-        request.state.user_idx = None
+        req_http.state.user_idx = None
 
-        token = _extract_bearer_token(request)
+        token = _extract_bearer_token(req_http)
         if token:
             try:
                 payload = decode_access_token(token)  # dict
@@ -38,16 +38,16 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
                 if sub is not None:
                     # sub가 user_idx(정수 문자열)인 경우
                     try:
-                        request.state.user_idx = int(sub)
+                        req_http.state.user_idx = int(sub)
                     except (TypeError, ValueError):
                         # sub가 user_id 같은 문자열이면 여기서 None 유지
-                        request.state.user_idx = None
+                        req_http.state.user_idx = None
             except Exception:
                 # 토큰이 이상해도 로깅 주입만 실패하고 요청은 계속 진행
-                request.state.user_idx = None
+                req_http.state.user_idx = None
 
-        response = await call_next(request)
+        response = await call_next(req_http)
 
         # 원하면 응답 헤더로 request_id도 내려서 추적 가능하게
-        response.headers["X-Request-ID"] = request.state.request_id
+        response.headers["X-Request-ID"] = req_http.state.request_id
         return response

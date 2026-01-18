@@ -26,7 +26,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"],
     description="가입 시 사용한 이메일로 아이디 안내 메일을 발송한다.",
 )
 def find_user_id(
-    request: Request,
+    req_http: Request,
     req: FindUserIdRequest,
     db: Session = Depends(get_db),
 ) -> FindUserIdResponse:
@@ -37,7 +37,7 @@ def find_user_id(
     - 존재하면 아이디 안내 메일 발송
     - 보안상: 이메일 존재 여부와 관계없이 항상 동일한 성공 응답 반환
     """
-    log = get_logger(request)
+    log = get_logger(req_http)
 
     try: 
         response = find_user_id_and_send_email(
