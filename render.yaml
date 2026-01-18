@@ -1,6 +1,7 @@
 services:
   - type: web
     name: knu-mla-backend
+    plan: free
     rootDir: backend
     env: python
     buildCommand: pip install -r requirements.txt
