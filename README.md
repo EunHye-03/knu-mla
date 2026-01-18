@@ -185,7 +185,7 @@ OpenAI 에러: OPENAI_API_KEY 유효성 및 결제/쿼터 확인
   uvicorn app.main:app --host 0.0.0.0 --port $PORT
   ```
 - **API Documentation (Swagger)**:
-  👉 https://<render-backend-url>/docs
+  👉 https://knu-mla-backend.onrender.com/docs
 
 > 📌 Backend 서버는 Render 환경에 배포되어 있으며,
 > 데이터베이스는 외부 PostgreSQL을 사용하여 연동합니다.
