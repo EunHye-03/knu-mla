@@ -8,6 +8,7 @@ import { ChatInput } from "@/components/chat/ChatInput"
 import { api } from "@/services/api"
 import { useLanguage } from "@/components/layout/language-context"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { ProjectDashboard } from "@/components/project/ProjectDashboard"
 
 type Message = {
   id: string
@@ -21,6 +22,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = React.useState(false)
   const [chatHistory, setChatHistory] = React.useState<{ id: number, title: string, pinned?: boolean, projectId?: string | number }[]>([])
   const [currentSessionId, setCurrentSessionId] = React.useState<number | null>(null)
+  const [activeProjectId, setActiveProjectId] = React.useState<string | number | undefined>(undefined)
+  const [viewMode, setViewMode] = React.useState<'chat' | 'dashboard'>('chat')
 
   // Load history from API, but also respect local storage if needed or merge them. 
   // For now, let's use the API for the source of truth if logged in, but the upstream used localStorage.
@@ -48,10 +51,18 @@ export default function Home() {
     ))
   }
 
-  const handleDeleteChat = (id: number) => {
+  const handleDeleteChat = async (id: number) => {
     if (confirm("Are you sure you want to delete this chat?")) {
-      setChatHistory(prev => prev.filter(chat => chat.id !== id))
-      // TODO: Call API to delete
+      try {
+        await api.deleteChatSession(id);
+        setChatHistory(prev => prev.filter(chat => chat.id !== id));
+        if (currentSessionId === id) {
+          handleNewChat();
+        }
+      } catch (e: any) {
+        console.error("Failed to delete chat", e);
+        alert(`Chatni o'chirishda xatolik yuz berdi: ${e.message || "Unknown error"}`);
+      }
     }
   }
 
@@ -67,13 +78,42 @@ export default function Home() {
     ))
   }
 
-  const handleNewChat = () => {
+  const handleNewChat = (projectId?: string | number) => {
     setCurrentSessionId(null);
+    setActiveProjectId(projectId);
     setMessages([]);
     setIsLoading(false);
+    setViewMode('chat');
   };
 
-  const handleSend = async (text: string, mode: string, options?: { targetLang?: string }) => {
+  const handleProjectClick = (projectId: string | number) => {
+    setActiveProjectId(projectId);
+    setViewMode('dashboard');
+    setCurrentSessionId(null);
+    setMessages([]);
+  };
+
+  const handleSelectChat = async (sessionId: number) => {
+    console.log("DEBUG: handleSelectChat called with sessionId:", sessionId);
+    console.log("Selecting chat session:", sessionId);
+    setCurrentSessionId(sessionId);
+    setViewMode('chat');
+    setIsLoading(true);
+    try {
+      const resp = await api.getChatMessages(sessionId);
+      setMessages(resp.map((m: any) => ({
+        id: m.message_id.toString(),
+        role: m.role,
+        content: m.content
+      })));
+    } catch (e) {
+      console.error("Failed to load messages", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSend = async (text: string, mode: string, options?: { targetLang?: string, projectId?: string | number, forceNew?: boolean }) => {
     // Determine if it's a feedback action or a real message
     if (mode === 'feedback_positive') {
       alert("Rahmat! (Thanks for your feedback) 👍");
@@ -83,8 +123,6 @@ export default function Home() {
       const reason = prompt("Nima xato ketdi? (What went wrong?)");
       if (reason) {
         alert(`Fikringiz qabul qilindi: "${reason}". \nBiz bu xatoni to'g'irlash ustida ishlaymiz.`);
-        // Here you could technically trigger a regeneration using the feedback
-        // For now, we just acknowledge it as per MVP
       }
       return;
     }
@@ -94,36 +132,32 @@ export default function Home() {
       return;
     }
 
-    setIsLoading(true)
+    if (!text.trim() || isLoading) return;
 
-    // Add user message
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: text,
-    }
+    // Use forced projectId if provided, otherwise fallback to activeProjectId if we're starting fresh
+    const effectiveProjectId = options?.projectId ?? activeProjectId;
+    const isActuallyNew = options?.forceNew || currentSessionId === null;
+    let sessionIdToUse = isActuallyNew ? null : currentSessionId;
 
-    setMessages((prev) => [...prev, userMsg])
+    // Optimistic UI
+    const newUserMsg: Message = { id: Date.now().toString(), role: 'user', content: text };
+    setMessages((prev) => [...prev, newUserMsg]);
+    setIsLoading(true);
 
     try {
-      // Cast mode to the expected type and pass language context
-      const safeMode = (mode === 'translate' || mode === 'summarize' || mode === 'term' || mode === 'chat') ? mode : 'chat';
-      // Use selected target language from options, or fallback to current app language
-      const targetLang = options?.targetLang || language;
+      const context = {
+        chatSessionId: sessionIdToUse,
+        targetLang: options?.targetLang || language,
+        projectId: sessionIdToUse === null ? effectiveProjectId : undefined
+      };
 
-      const response = await api.sendMessage(text, safeMode, {
-        targetLang,
-        chatSessionId: currentSessionId
-      });
+      const response = await api.sendMessage(text, mode as any, context);
 
-      if (response.chatSessionId) {
-        const isNewSession = currentSessionId === null;
+      if (response.chatSessionId && sessionIdToUse === null) {
         setCurrentSessionId(response.chatSessionId);
-        if (isNewSession) {
-          // Refresh history if we just created a session
-          // Small delay to ensure DB write is visible
-          setTimeout(() => loadHistory(), 500);
-        }
+        // Refresh history to show new session
+        const history = await api.getChatHistory();
+        setChatHistory(history);
       }
 
       const aiMsg: Message = {
@@ -134,7 +168,6 @@ export default function Home() {
       setMessages((prev) => [...prev, aiMsg])
     } catch (error) {
       console.error("Failed to send message:", error)
-      // Optional: Add error message to chat
       const errorMsg: Message = {
         id: (Date.now() + 2).toString(),
         role: "ai",
@@ -144,7 +177,7 @@ export default function Home() {
     } finally {
       setIsLoading(false)
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-transparent font-sans transition-colors duration-300">
@@ -155,67 +188,89 @@ export default function Home() {
         onDeleteChat={handleDeleteChat}
         onRenameChat={handleRenameChat}
         onMoveChat={handleMoveChat}
+        onProjectClick={handleProjectClick}
+        onSelectChat={handleSelectChat}
       />
 
       <div className="flex flex-1 flex-col h-screen overflow-hidden">
         <Header />
 
         <main className="flex flex-1 flex-col items-center p-4 md:p-6 overflow-y-auto">
-          <div className="flex w-full max-w-3xl flex-1 flex-col">
-            {messages.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center text-center space-y-8 py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-red-100 blur-2xl dark:bg-red-900/20 animate-pulse" />
-                  <div className="relative rounded-2xl bg-gradient-to-tr from-red-50 to-white/80 p-6 shadow-xl ring-1 ring-black/5 dark:from-zinc-900/80 dark:to-zinc-800/80 dark:ring-white/10 backdrop-blur-sm">
-                    <div className="text-5xl">👋</div>
+          {viewMode === 'dashboard' && activeProjectId ? (
+            <ProjectDashboard
+              project={(() => {
+                // Try to find project object from localStorage or state if needed
+                // For now, minimal object as required
+                const localProjects = JSON.parse(localStorage.getItem("knu_mla_projects") || "[]");
+                const found = localProjects.find((p: any) => p.id === activeProjectId);
+                return found || { id: activeProjectId, name: "Project", category: "default" };
+              })()}
+              chats={chatHistory.filter(c => c.projectId === activeProjectId)}
+              onNewChat={(text, mode, options) => {
+                handleNewChat(activeProjectId);
+                handleSend(text, mode, { ...options, projectId: activeProjectId, forceNew: true });
+              }}
+              onSelectChat={handleSelectChat}
+              isLoading={isLoading}
+            />
+          ) : (
+            <div className="flex w-full max-w-3xl flex-1 flex-col">
+              {messages.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center text-center space-y-8 py-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className="relative group">
+                    <img
+                      src="/mascot.png"
+                      alt="Mascot"
+                      className="h-[200px] w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                </div>
-                <div className="space-y-2 max-w-md">
-                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-600 bg-clip-text text-transparent dark:from-white dark:to-zinc-400">
-                    {t.welcome}
-                  </h1>
-                  <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    {t.sub_welcome}
-                  </p>
-                </div>
+                  <div className="space-y-2 max-w-md">
+                    <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-600 bg-clip-text text-transparent dark:from-white dark:to-zinc-400">
+                      {t.welcome}
+                    </h1>
+                    <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                      {t.sub_welcome}
+                    </p>
+                  </div>
 
-                {/* Feature Cards/Suggestions could go here if text allows, keeping it clean for now */}
-              </div>
-            ) : (
-              <div className="flex-1 pb-4">
-                {messages.map((msg) => (
-                  <ChatBubble
-                    key={msg.id}
-                    role={msg.role}
-                    content={msg.content}
-                    onAction={(action, text) => handleSend(text, action)}
-                    onCopy={() => {
-                      navigator.clipboard.writeText(msg.content)
-                      alert("Matn nusxalandi! (Copied to clipboard)")
-                    }}
-                  />
-                ))}
-                {isLoading && (
-                  <div className="flex w-full justify-center mb-6">
-                    {/* Floating 3D Loading Frame */}
-                    <div className="flex items-center gap-3 px-6 py-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-2xl shadow-xl shadow-red-100/50 dark:shadow-red-900/10 border border-zinc-100 dark:border-zinc-700 animate-in fade-in zoom-in duration-300">
-                      <div className="flex space-x-1">
-                        <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce"></div>
+                  {/* Feature Cards/Suggestions could go here if text allows, keeping it clean for now */}
+                </div>
+              ) : (
+                <div className="flex-1 pb-4">
+                  {messages.map((msg) => (
+                    <ChatBubble
+                      key={msg.id}
+                      role={msg.role}
+                      content={msg.content}
+                      onAction={(action, text) => handleSend(text, action)}
+                      onCopy={() => {
+                        navigator.clipboard.writeText(msg.content)
+                        alert("Matn nusxalandi! (Copied to clipboard)")
+                      }}
+                    />
+                  ))}
+                  {isLoading && (
+                    <div className="flex w-full justify-center mb-6">
+                      {/* Floating 3D Loading Frame */}
+                      <div className="flex items-center gap-3 px-6 py-3 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-2xl shadow-xl shadow-red-100/50 dark:shadow-red-900/10 border border-zinc-100 dark:border-zinc-700 animate-in fade-in zoom-in duration-300">
+                        <div className="flex space-x-1">
+                          <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-bounce"></div>
+                        </div>
+                        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{t.analyzing}</span>
                       </div>
-                      <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{t.analyzing}</span>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </main>
 
         <div className="w-full bg-transparent p-4 md:px-6 md:pb-6">
           <div className="mx-auto max-w-3xl">
-            <ChatInput onSend={handleSend} isLoading={isLoading} />
+            {viewMode === 'chat' && <ChatInput onSend={handleSend} isLoading={isLoading} />}
             <div className="mt-2 text-center text-xs text-muted-foreground">
               {t.disclaimer}
             </div>

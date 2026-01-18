@@ -6,7 +6,7 @@ export interface ChatResponse {
     chatSessionId?: number;
 }
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 class ApiService {
     private getToken(): string | null {
@@ -128,11 +128,16 @@ class ApiService {
         });
     }
 
-    async translate(text: string, targetLang: string, chatSessionId?: number): Promise<ChatResponse> {
-        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+    async translate(text: string, targetLang: string, chatSessionId?: number, projectId?: string | number): Promise<ChatResponse> {
+        const target = this.mapLanguageCode(targetLang);
+        const queryParams = new URLSearchParams();
+        if (chatSessionId != null) queryParams.append('chat_session_id', chatSessionId.toString());
+        if (projectId != null) queryParams.append('project_id', projectId.toString());
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const res = await this.request<any>(`/translate${queryString}`, {
             method: 'POST',
-            body: JSON.stringify({ text, target_lang: this.mapLanguageCode(targetLang) }),
+            body: JSON.stringify({ text, target_lang: target }),
         });
 
         return {
@@ -142,8 +147,12 @@ class ApiService {
         };
     }
 
-    async summarize(text: string, chatSessionId?: number): Promise<ChatResponse> {
-        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+    async summarize(text: string, chatSessionId?: number, projectId?: string | number): Promise<ChatResponse> {
+        const queryParams = new URLSearchParams();
+        if (chatSessionId != null) queryParams.append('chat_session_id', chatSessionId.toString());
+        if (projectId != null) queryParams.append('project_id', projectId.toString());
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const res = await this.request<any>(`/summarize${queryString}`, {
             method: 'POST',
             body: JSON.stringify({ text }),
@@ -170,8 +179,12 @@ class ApiService {
         };
     }
 
-    async chat(message: string, chatSessionId?: number): Promise<ChatResponse> {
-        const queryString = chatSessionId ? `?chat_session_id=${chatSessionId}` : '';
+    async chat(message: string, chatSessionId?: number, projectId?: string | number): Promise<ChatResponse> {
+        const queryParams = new URLSearchParams();
+        if (chatSessionId != null) queryParams.append('chat_session_id', chatSessionId.toString());
+        if (projectId != null) queryParams.append('project_id', projectId.toString());
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const res = await this.request<any>(`/chat/message${queryString}`, {
             method: 'POST',
             body: JSON.stringify({ message }),
@@ -237,14 +250,18 @@ class ApiService {
     // Unified chat method if simpler for the UI to consume
     async sendMessage(text: string, mode: 'translate' | 'summarize' | 'term' | 'chat', context?: any): Promise<ChatResponse> {
         const sessionId = context?.chatSessionId;
+        const projectId = context?.projectId;
         switch (mode) {
             case 'translate':
-                return this.translate(text, context?.targetLang || 'en', sessionId);
+                return this.translate(text, context?.targetLang || 'en', sessionId, projectId);
             case 'summarize':
-                return this.summarize(text, sessionId);
+                return this.summarize(text, sessionId, projectId);
             case 'term':
                 const termTarget = this.mapLanguageCode(context?.targetLang || 'en');
-                const queryString = sessionId ? `?chat_session_id=${sessionId}` : '';
+                const queryParams = new URLSearchParams();
+                if (sessionId != null) queryParams.append('chat_session_id', sessionId.toString());
+                if (projectId != null) queryParams.append('project_id', projectId.toString());
+                const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
                 const res = await this.request<any>(`/term/explain${queryString}`, {
                     method: 'POST',
                     body: JSON.stringify({ term: text, target_lang: termTarget }),
@@ -255,25 +272,38 @@ class ApiService {
                     chatSessionId: res.data?.chat_session_id
                 };
             case 'chat':
-                return this.chat(text, sessionId);
+                return this.chat(text, sessionId, projectId);
             default:
                 throw new Error(`Unsupported mode: ${mode}`);
         }
     }
 
-    async getChatHistory(): Promise<{ id: number, title: string }[]> {
-        // Using GET /chat for recent sessions
-        const response = await this.request<any>('/chat', {
+    async getChatHistory(): Promise<{ id: number, title: string, projectId?: string | number }[]> {
+        // Using GET /chat/sessions/recent for recent sessions
+        const response = await this.request<any>('/chat/sessions/recent', {
             method: 'GET'
         });
 
         if (response.success && response.data && Array.isArray(response.data.results)) {
             return response.data.results.map((item: any) => ({
                 id: item.chat_session_id,
-                title: item.title
+                title: item.title,
+                projectId: item.project_id
             }));
         }
         return [];
+    }
+
+    async getChatMessages(sessionId: number): Promise<any[]> {
+        return this.request<any[]>(`/chat/sessions/messages?chat_session_id=${sessionId}`, {
+            method: 'GET'
+        });
+    }
+
+    async deleteChatSession(sessionId: number): Promise<void> {
+        await this.request<void>(`/chat/sessions/${sessionId}`, {
+            method: 'DELETE'
+        });
     }
 
     // --- New Features from Upstream (Merged) ---
