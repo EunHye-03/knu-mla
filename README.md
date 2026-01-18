@@ -199,6 +199,7 @@ https://www.notion.so/KNU-MLA-2ec258ac18aa808aa34aff0adc53c981?source=copy_link
 
 ## 시연 영상 링크
 
-
+ https://youtu.be/VZzzfCz2p3c?si=25ihuHdeIJwFIGcz뭐
+ 
 
 ---
