@@ -4,12 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/components/layout/language-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
-<<<<<<< HEAD
-import { BackgroundWrapper } from "@/components/layout/background-wrapper";
-=======
-
 import { BackgroundProvider } from "@/components/layout/background-provider";
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,14 +39,9 @@ export default function RootLayout({
         >
           <AuthProvider>
             <LanguageProvider>
-<<<<<<< HEAD
-              <BackgroundWrapper />
-              {children}
-=======
               <BackgroundProvider>
                 {children}
               </BackgroundProvider>
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
             </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -14,16 +14,6 @@ export default function RegisterPage() {
     const { register } = useAuth()
     const { t } = useLanguage()
     const [name, setName] = React.useState("")
-<<<<<<< HEAD
-    const [email, setEmail] = React.useState("")
-    const [id, setId] = React.useState("")
-    const [password, setPassword] = React.useState("")
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (name && id && password && email) {
-            register(name, id, password, email)
-=======
     const [id, setId] = React.useState("")
     const [password, setPassword] = React.useState("")
     const [email, setEmail] = React.useState("")
@@ -36,14 +26,13 @@ export default function RegisterPage() {
                 alert(t.signup_email_required || "Invalid email")
                 return
             }
-            if (password.length < 6) {
-                alert("Password must be at least 6 characters")
+            if (password.length < 8) {
+                alert("Password must be at least 8 characters")
                 return
             }
             setIsLoading(true)
             await register(name, id, password, email)
             setIsLoading(false)
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
         }
     }
 
@@ -83,11 +72,7 @@ export default function RegisterPage() {
                             <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider group-focus-within:text-red-600 transition-colors">{t.email_label}</label>
                             <Input
                                 type="email"
-<<<<<<< HEAD
-                                placeholder={t.email_label}
-=======
                                 placeholder={t.email_placeholder}
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                                 className="bg-zinc-50/50 border-zinc-200 focus:border-red-500 focus:ring-red-500/20 dark:bg-zinc-900/50 dark:border-zinc-800 transition-all duration-300"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -114,18 +99,11 @@ export default function RegisterPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-<<<<<<< HEAD
                                 minLength={8}
-                            />
-                        </div>
-                        <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
-                            {t.register_button} <ArrowRight className="ml-2 h-4 w-4" />
-=======
                             />
                         </div>
                         <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/20 h-11 text-base font-medium transition-all hover:scale-[1.02] active:scale-[0.98]">
                             {isLoading ? "Loading..." : t.register_button} <ArrowRight className="ml-2 h-4 w-4" />
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                         </Button>
                     </CardContent>
                 </form>
@@ -138,10 +116,6 @@ export default function RegisterPage() {
                     </div>
                 </CardFooter>
             </Card>
-<<<<<<< HEAD
-        </div>
-=======
         </div >
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
     )
 }

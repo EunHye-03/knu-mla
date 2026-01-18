@@ -1,11 +1,7 @@
 "use client"
 
 import * as React from "react"
-<<<<<<< HEAD
-import { X, StickyNote, Save } from "lucide-react"
-=======
 import { X, StickyNote, Save, Trash2, Pencil } from "lucide-react"
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
 import { useLanguage } from "@/components/layout/language-context"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -32,8 +28,6 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
         onClose()
     }
 
-<<<<<<< HEAD
-=======
     const handleEdit = () => {
         // For now, edit just saves the current note (could open an edit modal later)
         localStorage.setItem("knu_mla_memo", note)
@@ -47,10 +41,6 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
     }
 
 
-
-
-
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
     if (!open) return null
 
     return (
@@ -77,11 +67,7 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
                         autoFocus
                     />
 
-<<<<<<< HEAD
-                    <div className="flex justify-end pt-4">
-=======
                     <div className="flex justify-end pt-4 space-x-2">
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                         <Button
                             className="bg-amber-500 hover:bg-amber-600 text-white border-none shadow-amber-200 dark:shadow-none"
                             onClick={handleSave}
@@ -89,8 +75,6 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
                             <Save className="h-4 w-4 mr-2" />
                             {t.save_memo}
                         </Button>
-<<<<<<< HEAD
-=======
                         <Button
                             className="bg-amber-400 hover:bg-amber-500 text-white border-none"
                             onClick={handleEdit}
@@ -106,7 +90,6 @@ export function MemoDialog({ open, onClose }: MemoDialogProps) {
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                         </Button>
->>>>>>> 3f9535c0ba0d1465d120ac478de5798047cd6ca3
                     </div>
                 </div>
             </Card>
