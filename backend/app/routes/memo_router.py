@@ -27,12 +27,12 @@ router = APIRouter(prefix="/memo", tags=["Memo"])
 
 @router.post("", response_model=MemoResponse)
 def post_memo(
-    request: Request,
+    req_http: Request,
     req: MemoCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(request)
+    log = get_logger(req_http)
 
     try:
         memo = create_memo(
@@ -78,11 +78,11 @@ def post_memo(
 
 @router.get("", response_model=list[MemoResponse])
 def get_memo_list(
-    request: Request,
+    req_http: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(request)
+    log = get_logger(req_http)
 
     log.info("MEMO_LIST_REQUEST")
 
@@ -126,13 +126,13 @@ def get_memo_list(
 
 @router.patch("/{memo_id}", response_model=MemoResponse)
 def patch_memo(
-    request: Request,
+    req_http: Request,
     memo_id: int,
     req: MemoUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = get_logger(request)
+    log = get_logger(req_http)
 
     log.info(
         "MEMO_UPDATE_REQUEST",

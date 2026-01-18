@@ -15,8 +15,8 @@ router = APIRouter(prefix="/feedback", tags=["Feedback"], dependencies=[Depends(
 
 
 @router.post("", response_model=FeedbackUpsertResponse)
-def upsert_feedback(request: Request, req: FeedbackUpsertRequest, db: Session = Depends(get_db)):
-    log = get_logger(request)
+def upsert_feedback(req_http: Request, req: FeedbackUpsertRequest, db: Session = Depends(get_db)):
+    log = get_logger(req_http)
 
     log.info(
         "FEEDBACK_UPSERT_REQUEST",
@@ -62,8 +62,8 @@ def upsert_feedback(request: Request, req: FeedbackUpsertRequest, db: Session = 
 
 
 @router.get("", response_model=FeedbackUpsertResponse | None)
-def read_feedback(request: Request, chat_session_id: int, message_id: int, db: Session = Depends(get_db)):
-    log = get_logger(request)
+def read_feedback(req_http: Request, chat_session_id: int, message_id: int, db: Session = Depends(get_db)):
+    log = get_logger(req_http)
 
     log.info(
         "FEEDBACK_READ_REQUEST",

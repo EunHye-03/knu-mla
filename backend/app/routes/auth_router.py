@@ -11,8 +11,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register", response_model=UserOut, status_code=201)
-def register(request: Request, req: UserRegister, db: Session = Depends(get_db)):
-    logger = get_logger(request)
+def register(req_http: Request, req: UserRegister, db: Session = Depends(get_db)):
+    logger = get_logger(req_http)
 
     logger.info("REGISTER_REQUEST")
 
@@ -29,8 +29,8 @@ def register(request: Request, req: UserRegister, db: Session = Depends(get_db))
         raise
 
 @router.post("/login", response_model=TokenResponse)
-def login(request: Request, req: UserLogin, db: Session = Depends(get_db)):
-    logger = get_logger(request)
+def login(req_http: Request, req: UserLogin, db: Session = Depends(get_db)):
+    logger = get_logger(req_http)
 
     logger.info(
         "LOGIN_REQUEST",
@@ -57,8 +57,8 @@ def login(request: Request, req: UserLogin, db: Session = Depends(get_db)):
         )
 
 @router.post("/logout", status_code=204)
-def logout(request: Request):
-    logger = get_logger(request)
+def logout(req_http: Request):
+    logger = get_logger(req_http)
 
     logger.info("LOGOUT_REQUEST")
     logger.info("LOGOUT_SUCCESS")
