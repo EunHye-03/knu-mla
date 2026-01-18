@@ -504,7 +504,7 @@ def search_sessions(
 
 
 # 세션 제목 수정
-@router.patch("sessions/title", response_model=ChatSessionTitleUpdateResponse)
+@router.patch("/sessions/title", response_model=ChatSessionTitleUpdateResponse)
 def patch_title(
     req: Request,
     payload: ChatSessionTitleUpdateRequest,
