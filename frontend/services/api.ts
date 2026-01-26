@@ -122,6 +122,13 @@ class ApiService {
         });
     }
 
+    async resetPasswordWithToken(token: string, newPassword: string): Promise<void> {
+        return this.request<void>('/auth/reset', {
+            method: 'POST',
+            body: JSON.stringify({ token, new_password: newPassword }),
+        });
+    }
+
     async deleteAccount(): Promise<void> {
         return this.request<void>('/auth/delete-account', {
             method: 'DELETE',
@@ -232,7 +239,11 @@ class ApiService {
             headers
         });
 
-        if (!response.ok) throw new Error('File upload failed');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const msg = errorData.message || errorData.detail || 'File upload failed';
+            throw new Error(msg);
+        }
         return await response.json();
     }
 
@@ -311,7 +322,7 @@ class ApiService {
     // Note: Upstream signup is not used, as we use register()
 
     async requestPasswordReset(email: string): Promise<any> {
-        return this.request('/auth/forgot-password', {
+        return this.request('/auth/forgot', {
             method: 'POST',
             body: JSON.stringify({ email }),
         });

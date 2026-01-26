@@ -2,7 +2,7 @@ import openai
 from app.services.openai_service import call_llm, OpenAIServiceError
 from app.exceptions.error import AppError, ErrorCode
 
-MAX_TEXT_LENGTH = 500  # 최대 텍스트 길이 제한
+MAX_TEXT_LENGTH = 50000  # 최대 텍스트 길이 제한 (50k for larger files)
 
 
 def summarize_text(
