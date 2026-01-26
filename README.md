@@ -266,7 +266,8 @@ Framework: Next.js (App Router)
 
 Deployment URL: 👉 https://knu-mla.vercel.app
 
-Environment Variable: NEXT_PUBLIC_API_URL is configured to point to the Render backend service (https://knu-mla-backend.onrender.com).
+- Environment Variable:
+  - `NEXT_PUBLIC_API_URL` is configured to point to the Render backend service.
 
 📌 The Frontend is hosted on Vercel and features automated deployments from the GitHub repository (CI/CD) with every commit.
 
