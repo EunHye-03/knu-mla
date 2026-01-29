@@ -62,13 +62,6 @@ AI 기반 다국어 학습·생활 지원 챗봇 서비스
 
 ---
 
-## 🔧 Backend 실행 (FastAPI)
-
-### 1️⃣ 백엔드 폴더 이동
-```bash
-cd backend
-```
-
 # 🤖 KNU MLA (Multi-Language Assistant)
 
 KNU MLA는 다국어 환경에서 효율적인 의사소통과 문서 작업을 돕기 위해 설계된 AI 기반 웹 어플리케이션입니다. 번역, 요약, 전문 용어 설명 및 지능형 채팅 기능을 제공합니다.
