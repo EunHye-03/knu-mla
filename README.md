@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # KNU Multilingual Assistant (KNU MLA)
 
 경북대학교 유학생 및 다국어 사용 학생들을 위한  
@@ -68,6 +67,7 @@ AI 기반 다국어 학습·생활 지원 챗봇 서비스
 ### 1️⃣ 백엔드 폴더 이동
 ```bash
 cd backend
+```
 =======
 # 🤖 KNU MLA (Multi-Language Assistant)
 
@@ -137,7 +137,6 @@ npm run dev
   NEXT_PUBLIC_API_URL=http://localhost:8000
   ```
 
-<<<<<<< HEAD
 #### 2) 가상환경 생성 & 활성화
 
 Windows (PowerShell)
