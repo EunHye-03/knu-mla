@@ -124,18 +124,12 @@ KNU MLA의 디자인은 **"심플함 속의 강력함"**과 **"사용자 경험�
 
 ## 🚀 시작하기 (Getting Started)
 
-### 1. 프론트엔드 (Frontend)
+### 🔧 Backend 실행 (FastAPI)
+
+#### 1) 백엔드 폴더 이동
 ```bash
-cd frontend
-npm install
-npm run dev
->>>>>>> feature/backend-user
+cd backend
 ```
-- **기본 주소**: `http://localhost:3000`
-- **필수 환경 변수**: `frontend/.env.local` 파일 생성 후 백엔드 URL 설정.
-  ```env
-  NEXT_PUBLIC_API_URL=http://localhost:8000
-  ```
 
 #### 2) 가상환경 생성 & 활성화
 
