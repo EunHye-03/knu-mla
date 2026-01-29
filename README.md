@@ -95,7 +95,7 @@ KNU MLA의 디자인은 **"심플함 속의 강력함"**과 **"사용자 경험�
   - Faster-Whisper (High-speed Speech-to-Text)
 - **Data & Storage**: 
   - SQLAlchemy (ORM)
-  - SQLite (Local Development) / PostgreSQL (Production)
+  - PostgreSQL
 - **File Processing**: PyPDF, Python-PPTX (Document analysis)
 - **Auth**: JWT (JSON Web Token), Bcrypt (Password Hashing)
 
