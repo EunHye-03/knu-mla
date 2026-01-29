@@ -28,42 +28,6 @@ AI 기반 다국어 학습·생활 지원 챗봇 서비스
 
 ---
 
-## 🛠 기술 스택
-
-### Backend
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- OpenAI API
-
-### Frontend
-- Next.js
-- TypeScript
-
-### Infra
-- GitHub
-- Render (Backend)
-- Vercel (Frontend)
-
-
----
-
-# 🤖 KNU MLA (Multi-Language Assistant)
-
-KNU MLA는 다국어 환경에서 효율적인 의사소통과 문서 작업을 돕기 위해 설계된 AI 기반 웹 어플리케이션입니다. 번역, 요약, 전문 용어 설명 및 지능형 채팅 기능을 제공합니다.
-
----
-
-## ✨ 주요 기능 (Key Features)
-
-- **💬 지능형 채팅 (AI Chat)**: OpenAI 기술을 활용한 다국어 챗봇 지원.
-- **🌐 전문 번역 (Professional Translation)**: 한국어, 영어, 우즈베크어 간의 정교한 번역 기능.
-- **📄 문서 요약 (Summarization)**: 긴 텍스트와 문서를 핵심 내용 위주로 빠르게 요약.
-- **📚 용어 설명 (Term Explanation)**: 전문 용어나 생소한 단어를 상세히 설명.
-- **📂 히스토리 및 프로젝트 관리**: 이전 대화 내용을 확인하고 프로젝트별로 관리 가능.
-
----
-
 ## 🎨 UI/UX 설계 철학 (Design Philosophy)
 
 KNU MLA의 디자인은 **"심플함 속의 강력함"**과 **"사용자 경험의 따뜻함"**을 지향합니다.
